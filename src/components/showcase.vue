@@ -19,13 +19,17 @@
     import { ref } from "vue";
 
     const props = defineProps({
+    year: {
+        type: Number,
+        required: true,
+    },
     day: {
         type: Number,
         required: true,
     },
     });
 
-    const files = import.meta.glob("./days/*/*.js", {
+    const files = import.meta.glob("./days/*/*/*.js", {
     query: "?raw",
     import: "default",
     });
@@ -33,9 +37,9 @@
     const parseFileContent = ref("");
 
     Object.keys(files).forEach(async (path) => {
-    if (path.endsWith(`/${props.day}/parseInput.js`))
+    if (path.includes(`/${props.year}/${props.day}/parseInput.js`))
         parseFileContent.value = await files[path]();
-    if (path.endsWith(`/${props.day}/solve.js`))
+    if (path.includes(`/${props.year}/${props.day}/solve.js`))
         solveFileContent.value = await files[path]();
     });
 </script>

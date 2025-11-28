@@ -13,7 +13,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const base = mode === 'production' ? '/advent-of-code-2024/' : '/';
+  const base = mode === 'production' ? '/advent-of-code/' : '/';
   return {
     base,
     build: {

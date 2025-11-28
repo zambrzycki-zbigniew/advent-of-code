@@ -29,11 +29,15 @@ jobs:
       - name: Extract Member Data
         run: |
           python -c "
+          import os
           import json
           with open('leaderboard.json') as f:
               data = json.load(f)
           member_data = data['members']['3788958']
           with open('public/leaderboard_member_3788958.json', 'w') as f:
+              json.dump(member_data, f, indent=2)
+          year = os.getenv('AOC_YEAR', '2024')
+          with open(f'public/leaderboard_member_{year}.json', 'w') as f:
               json.dump(member_data, f, indent=2)
           "
 

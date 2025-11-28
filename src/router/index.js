@@ -2,7 +2,9 @@ import { createRouter, createWebHashHistory } from 'vue-router/auto';
 import { setupLayouts } from 'virtual:generated-layouts';
 import { routes as autoRoutes } from 'vue-router/auto-routes';
 import GenericDayComponent from '@/pages/advent-of-code/day.vue';
-import ArcCalculatorComponent from '@/pages/advent-of-code/day.vue';
+import ArcCalculatorComponent from '@/pages/minecraft/arcCalculator.vue';
+
+const defaultYear = 2024;
 
 const arcCalculatorRoute = {
   path: `/minecraft/arcCalculator`,
@@ -10,18 +12,23 @@ const arcCalculatorRoute = {
   name: "MinecraftArcCalculator",
 };
 
-const dayFiles = import.meta.glob('@/components/days/*/solve.js');
+const dayFiles = import.meta.glob('@/components/days/*/*/solve.js');
+
+const parseExamplesForYear = (year, day) => {
+  const examplesForYear = examplesData[year] || examplesData;
+  return examplesForYear?.[day] || [];
+};
 
 let examplesData = {};
 async function fetchExamples() {
   try {
-
-    let url = process.env.NODE_ENV === "production" ? `/advent-of-code-2024/examples.json` : `/examples.json`
+    const base = import.meta.env.BASE_URL || '/';
+    const url = `${base}examples.json`;
     const response = await fetch(url);
     try {
-      examplesData = await response.json()
+      examplesData = await response.json();
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   } catch (error) {
     console.error('Error fetching examples.json:', error);
@@ -29,63 +36,73 @@ async function fetchExamples() {
 }
 
 const dayRoutes = Object.keys(dayFiles).map((filePath) => {
-  const day = filePath.split('/days/')[1]?.split('/')[0];
-  if (day) {
-    const dayNumber = parseInt(day, 10);
-    return [
-      {
-        path: `/days/${dayNumber}`,
-        component: GenericDayComponent,
-        name: `Day${dayNumber}`,
-        props: (route) => ({
-          day: dayNumber,
-          examples: examplesData[dayNumber] || [],
-        }),
-        beforeEnter: async (to, from, next) => {
-          await fetchExamples();
-          next();
-        },
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  const match = normalizedPath.match(/days\/([^/]+)\/([^/]+)\/solve\.js$/);
+  if (!match) return null;
+
+  const [, year, day] = match;
+  const yearNumber = parseInt(year, 10);
+  const dayNumber = parseInt(day, 10);
+
+  return [
+    {
+      path: `/${yearNumber}/days/${dayNumber}`,
+      component: GenericDayComponent,
+      name: `Year${yearNumber}Day${dayNumber}`,
+      props: () => ({
+        year: yearNumber,
+        day: dayNumber,
+        examples: parseExamplesForYear(yearNumber, dayNumber),
+      }),
+      beforeEnter: async (to, from, next) => {
+        await fetchExamples();
+        next();
       },
-      {
-        path: `/days/${dayNumber}/part/1`,
-        component: GenericDayComponent,
-        name: `Day${dayNumber}Part1`,
-        props: (route) => ({
-          day: dayNumber,
-          part: 1,
-          examples: examplesData[dayNumber] || [],
-        }),
-        beforeEnter: async (to, from, next) => {
-          await fetchExamples();
-          next();
-        },
+    },
+    {
+      path: `/${yearNumber}/days/${dayNumber}/part/1`,
+      component: GenericDayComponent,
+      name: `Year${yearNumber}Day${dayNumber}Part1`,
+      props: () => ({
+        year: yearNumber,
+        day: dayNumber,
+        part: 1,
+        examples: parseExamplesForYear(yearNumber, dayNumber),
+      }),
+      beforeEnter: async (to, from, next) => {
+        await fetchExamples();
+        next();
       },
-      {
-        path: `/days/${dayNumber}/part/2`,
-        component: GenericDayComponent,
-        name: `Day${dayNumber}Part2`,
-        props: (route) => ({
-          day: dayNumber,
-          part: 2,
-          examples: examplesData[dayNumber] || [],
-        }),
-        beforeEnter: async (to, from, next) => {
-          await fetchExamples();
-          next();
-        },
+    },
+    {
+      path: `/${yearNumber}/days/${dayNumber}/part/2`,
+      component: GenericDayComponent,
+      name: `Year${yearNumber}Day${dayNumber}Part2`,
+      props: () => ({
+        year: yearNumber,
+        day: dayNumber,
+        part: 2,
+        examples: parseExamplesForYear(yearNumber, dayNumber),
+      }),
+      beforeEnter: async (to, from, next) => {
+        await fetchExamples();
+        next();
       },
-    ];
-  }
-  return [null];
+    },
+  ];
 }).flat().filter(Boolean);
 
 const routes = setupLayouts([
   {
     path: '/',
-    redirect: '/days/1',
+    redirect: `/${defaultYear}/days/1`,
   },
   ...autoRoutes,
   ...dayRoutes,
+  {
+    path: '/days/:day(\\d+)',
+    redirect: (route) => `/${defaultYear}/days/${route.params.day}`,
+  },
   arcCalculatorRoute,
 ]);
 

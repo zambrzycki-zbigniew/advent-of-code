@@ -40,7 +40,7 @@
       >Show solution</v-btn
     >
   </div>
-  <Showcase :day="day" v-if="allowPeek" />
+  <Showcase :year="year" :day="day" v-if="allowPeek" />
   <v-dialog v-model="showcaseDialog" max-width="800px">
     <v-card>
       <v-card-title>
@@ -111,6 +111,10 @@ import { ref, onMounted, watch, onUnmounted } from "vue";
 import Showcase from "../showcase.vue";
 
 const props = defineProps({
+  year: {
+    type: Number,
+    required: true,
+  },
   inputs: {
     type: Array,
     required: true,
@@ -169,7 +173,7 @@ const closeDialog = () => {
 const checkSolutions = async () => {
   try {
     const parseModule = await import(
-      `@/components/days/${props.day}/parseInput.js`
+      `@/components/days/${props.year}/${props.day}/parseInput.js`
     );
     let peekInput = parseModule.parseInput(peekInputText.value);
     const part1Correct =
@@ -184,12 +188,14 @@ const checkSolutions = async () => {
       peekLoading.value = true;
       worker.postMessage({
         type: "solvePart1",
+        year: props.year,
         day: props.day,
         inputs: JSON.parse(JSON.stringify(peekInput)),
         peek: true,
       });
       worker.postMessage({
         type: "solvePart2",
+        year: props.year,
         day: props.day,
         inputs: JSON.parse(JSON.stringify(peekInput)),
         peek: true,
@@ -265,6 +271,7 @@ onMounted(() => {
           if (newPart === 1 || newPart === null) {
             worker.postMessage({
               type: "examplePart1",
+              year: props.year,
               day: props.day,
               example: JSON.parse(JSON.stringify(newExample)),
               differentExamples: newDifferentExamples,
@@ -273,6 +280,7 @@ onMounted(() => {
           if (newPart === 2 || newPart === null) {
             worker.postMessage({
               type: "examplePart2",
+              year: props.year,
               day: props.day,
               example: JSON.parse(JSON.stringify(newExample)),
               differentExamples: newDifferentExamples,
@@ -282,6 +290,7 @@ onMounted(() => {
         if (newPart === 1 || newPart === null) {
           worker.postMessage({
             type: "solvePart1",
+            year: props.year,
             day: props.day,
             inputs: JSON.parse(JSON.stringify(newInputs)),
           });
@@ -289,6 +298,7 @@ onMounted(() => {
         if (newPart === 2 || newPart === null) {
           worker.postMessage({
             type: "solvePart2",
+            year: props.year,
             day: props.day,
             inputs: JSON.parse(JSON.stringify(newInputs)),
           });

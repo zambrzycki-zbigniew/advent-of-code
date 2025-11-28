@@ -1,29 +1,31 @@
 self.onmessage = async function (event) {
-    const { type, day, inputs } = event.data;
+    const { type, year, day, inputs } = event.data;
 
     try {
-        // Import generator functions z animation.js
-        const solverModule = await import(`../components/days/${day}/animation.js`);
+        const targetYear = year ?? 2024;
+        const solverModule = await import(`../components/days/${targetYear}/${day}/animation.js`);
         const { solvePart1, solvePart2 } = solverModule;
 
-        // Funkcja pomocnicza do obsługi generatora
+        /**
+         * Streams generator-produced animation actions back to the main thread.
+         * Adds a short delay between batches to keep playback smooth.
+         * @param {Generator} generator animation generator yielding action arrays
+         * @param {string} messageType message identifier used when posting the final result
+         */
         async function processGenerator(generator, messageType) {
             for (const actions of generator) {
-                // Akcja z generatora - przesyłamy ją do głównego wątku
                 self.postMessage({
                     type: 'animationActions',
-                    actions, // Tablica akcji zwrócona przez generator
+                    actions,
                 });
 
-                // Opcjonalna pauza między krokami (jeśli wymagana jest płynność)
-                await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms
+                await new Promise((resolve) => setTimeout(resolve, 50));
             }
 
-            // Gdy generator zwróci wynik końcowy
             const finalResult = generator.return().value || null;
             self.postMessage({
                 type: messageType,
-                finalResult, // Wynik końcowy
+                finalResult,
             });
         }
 

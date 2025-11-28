@@ -13,56 +13,59 @@
 
       <v-divider></v-divider>
       <v-list density="compact">
-        <v-list-item
-          min-height="32"
-          v-for="day in dayNumbers"
-          :key="day"
-          :to="days.includes(day) ? `/days/${day}` : null"
-          :disabled="!days.includes(day)"
-          link
-        >
-          <v-list-item-title v-if="!rail" class="d-flex justify-space-between">
-            Day {{ day }}
-            <span>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon
-                    v-bind="props"
-                    :color="getStarColor(day, 1).color"
-                    icon="mdi-star"
-                  />
-                </template>
-                <template v-slot:default>
-                  {{ getStarColor(day, 1).time }}
-                </template>
-              </v-tooltip>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon
-                    v-bind="props"
-                    :color="getStarColor(day, 2).color"
-                    icon="mdi-star"
-                  />
-                </template>
-                <template v-slot:default>
-                  {{ getStarColor(day, 2).time }}
-                </template>
-              </v-tooltip>
-            </span>
-          </v-list-item-title>
-          <v-list-item-title v-else>{{ day }}</v-list-item-title>
-          <template v-slot:append>
-            <v-btn
-              density="compact"
-              color="transparent"
-              :disabled="false"
-              v-if="isDev && !rail"
-              :icon="days.includes(day) ? 'mdi-pencil' : 'mdi-plus'"
-              @click.stop="openDialog(day)"
-              style="pointer-events: auto"
-            ></v-btn>
-          </template>
-        </v-list-item>
+        <template v-for="year in years" :key="year">
+          <v-list-subheader>{{ year }}</v-list-subheader>
+          <v-list-item
+            min-height="32"
+            v-for="day in dayNumbers"
+            :key="`${year}-${day}`"
+            :to="hasDay(year, day) ? `/${year}/days/${day}` : null"
+            :disabled="!hasDay(year, day)"
+            link
+          >
+            <v-list-item-title v-if="!rail" class="d-flex justify-space-between">
+              Day {{ day }}
+              <span>
+                <v-tooltip location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      :color="getStarColor(year, day, 1).color"
+                      icon="mdi-star"
+                    />
+                  </template>
+                  <template v-slot:default>
+                    {{ getStarColor(year, day, 1).time }}
+                  </template>
+                </v-tooltip>
+                <v-tooltip location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      :color="getStarColor(year, day, 2).color"
+                      icon="mdi-star"
+                    />
+                  </template>
+                  <template v-slot:default>
+                    {{ getStarColor(year, day, 2).time }}
+                  </template>
+                </v-tooltip>
+              </span>
+            </v-list-item-title>
+            <v-list-item-title v-else>{{ day }}</v-list-item-title>
+            <template v-slot:append>
+              <v-btn
+                density="compact"
+                color="transparent"
+                :disabled="false"
+                v-if="isDev && !rail"
+                :icon="hasDay(year, day) ? 'mdi-pencil' : 'mdi-plus'"
+                @click.stop="openDialog(year, day)"
+                style="pointer-events: auto"
+              ></v-btn>
+            </template>
+          </v-list-item>
+        </template>
       </v-list>
     </v-navigation-drawer>
 
@@ -72,7 +75,7 @@
 
     <v-dialog v-model="dialogVisible" max-width="600">
       <v-card>
-        <v-card-title>Edit Day {{ dialogDay }}</v-card-title>
+        <v-card-title>Edit {{ dialogYear }} Day {{ dialogDay }}</v-card-title>
         <v-card-text>
           <v-textarea
             label="Input"
@@ -116,13 +119,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const isDev = process.env.NODE_ENV !== "production";
+const basePath = import.meta.env.BASE_URL || "/";
+const defaultYear = 2024;
 
 const drawer = ref(true);
 const rail = ref(false);
 const dialogVisible = ref(false);
+const dialogYear = ref(defaultYear);
 const dialogDay = ref(null);
 const dialogData = ref({
   input: "",
@@ -130,37 +136,64 @@ const dialogData = ref({
   example2: "",
   exampleSolution1: "",
   exampleSolution2: "",
-  outputType: 0
+  outputType: 0,
 });
 
-const completion_day_level = ref(null);
+const completionByYear = ref({});
 const examples = ref({});
 
-async function getLeaderboardData() {
-  let url =
-    process.env.NODE_ENV === "production"
-      ? `/advent-of-code-2024/leaderboard_member_3788958.json`
-      : `/leaderboard_member_3788958.json`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to fetch from ${url}: ${response.statusText}`);
-    }
+const dayNumbers = Array.from({ length: 25 }, (_, i) => i + 1);
+const dayFiles = import.meta.glob("@/components/days/*/*/solve.js");
+const dayMap = ref({});
 
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
+Object.keys(dayFiles).forEach((filePath) => {
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  const match = normalizedPath.match(/days\/([^/]+)\/([^/]+)\/solve\.js$/);
+  if (!match) return;
+  const year = parseInt(match[1], 10);
+  const day = parseInt(match[2], 10);
+  if (!dayMap.value[year]) dayMap.value[year] = [];
+  if (!dayMap.value[year].includes(day)) dayMap.value[year].push(day);
+});
+
+Object.keys(dayMap.value).forEach((year) =>
+  dayMap.value[year].sort((a, b) => a - b)
+);
+
+const years = computed(() => {
+  const list = Object.keys(dayMap.value)
+    .map((year) => parseInt(year, 10))
+    .sort((a, b) => b - a);
+  return list.length ? list : [defaultYear];
+});
+
+const hasDay = (year, day) => !!dayMap.value[year]?.includes(day);
+
+async function getLeaderboardData(year = defaultYear) {
+  const urls = [
+    `${basePath}leaderboard_member_${year}.json`,
+    `${basePath}leaderboard_member_3788958.json`,
+  ];
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(`Failed to fetch from ${url}: ${response.statusText}`);
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn(`Unexpected content type from ${url}: ${contentType}`);
+        continue;
+      }
+
       const data = await response.json();
-      completion_day_level.value = data.completion_day_level;
+      completionByYear.value[year] = data.completion_day_level || data;
       return;
-    } else if (contentType && contentType.includes("text/html")) {
-      console.warn(`The server returned HTML instead of JSON for ${url}.`);
-      const text = await response.text();
-      console.debug("HTML content received:", text);
-    } else {
-      console.error(`Unexpected content type from ${url}: ${contentType}`);
+    } catch (error) {
+      console.error(`Error fetching from ${url}:`, error);
     }
-  } catch (error) {
-    console.error(`Error fetching from ${url}:`, error);
   }
 
   console.error("Failed to fetch leaderboard data from all sources.");
@@ -170,7 +203,7 @@ getLeaderboardData();
 
 async function fetchExamples() {
   try {
-    const response = await fetch("/examples.json");
+    const response = await fetch(`${basePath}examples.json`);
     if (response.ok) {
       examples.value = await response.json();
     } else {
@@ -196,22 +229,20 @@ function formatTimestamp(unixTimestamp) {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-function getStarColor(day, part) {
+function getStarColor(year, day, part) {
   let star = { color: "gray", time: "not yet" };
-  if (
-    completion_day_level.value &&
-    completion_day_level.value[day] &&
-    completion_day_level.value[day][part]
-  ) {
+  const completion = completionByYear.value[year];
+  if (completion && completion[day] && completion[day][part]) {
     star = {
       color: "amber",
-      time: formatTimestamp(completion_day_level.value[day][part].get_star_ts),
+      time: formatTimestamp(completion[day][part].get_star_ts),
     };
   }
   return star;
 }
 
-async function openDialog(day) {
+async function openDialog(year, day) {
+  dialogYear.value = year;
   dialogDay.value = day;
   dialogData.value = {
     input: "",
@@ -219,22 +250,26 @@ async function openDialog(day) {
     example2: "",
     exampleSolution1: "",
     exampleSolution2: "",
+    outputType: 0,
   };
 
-  if (days.value.includes(day)) {
+  const examplesForYear = examples.value[year] || examples.value;
+
+  if (hasDay(year, day)) {
     try {
+      const prefix = `${basePath}inputs/${year}/`;
       await Promise.all([
-        fetch(`/inputs/${day}.txt`).then((res) =>
+        fetch(`${prefix}${day}.txt`).then((res) =>
           res
             .text()
             .then((text) => (text.includes("<!DOCTYPE html>") ? "" : text))
         ),
-        fetch(`/inputs/${day}example.txt`).then((res) =>
+        fetch(`${prefix}${day}example.txt`).then((res) =>
           res
             .text()
             .then((text) =>
               text.includes("<!DOCTYPE html>")
-                ? fetch(`/inputs/${day}example1.txt`).then((res2) =>
+                ? fetch(`${prefix}${day}example1.txt`).then((res2) =>
                     res2
                       .text()
                       .then((text2) =>
@@ -244,7 +279,7 @@ async function openDialog(day) {
                 : text
             )
         ),
-        fetch(`/inputs/${day}example2.txt`).then((res) =>
+        fetch(`${prefix}${day}example2.txt`).then((res) =>
           res
             .text()
             .then((text) => (text.includes("<!DOCTYPE html>") ? "" : text))
@@ -254,8 +289,10 @@ async function openDialog(day) {
           dialogData.value.input = input;
           dialogData.value.example1 = example1;
           dialogData.value.example2 = example2;
-          dialogData.value.exampleSolution1 = examples.value[day]?.[0] || null;
-          dialogData.value.exampleSolution2 = examples.value[day]?.[1] || null;
+          dialogData.value.exampleSolution1 =
+            examplesForYear?.[day]?.[0] ?? null;
+          dialogData.value.exampleSolution2 =
+            examplesForYear?.[day]?.[1] ?? null;
         })
         .then(() => {
           setTimeout(() => (dialogVisible.value = true), 10);
@@ -263,7 +300,7 @@ async function openDialog(day) {
     } catch (error) {
       console.error("Error fetching data for dialog:", error);
     }
-  } else dialogVisible.value = true
+  } else dialogVisible.value = true;
 }
 
 function closeDialog() {
@@ -274,28 +311,34 @@ function closeDialog() {
 function saveData() {
   if (!isDev) return;
 
+  const year = dialogYear.value;
   const day = dialogDay.value;
-  if (!day) return;
+  if (!day || !year) return;
 
   const data = dialogData.value;
 
-  // Dane do zapisania w examples.json
   const newExamples = {
-    [day]: [],
+    [year]: {
+      [day]: [],
+    },
   };
-  if(data.outputType === 0) newExamples[day].push(parseInt(data.exampleSolution1), parseInt(data.exampleSolution2))
-  else newExamples[day].push(data.exampleSolution1, data.exampleSolution2)
-  
+  if (data.outputType === 0)
+    newExamples[year][day].push(
+      parseInt(data.exampleSolution1),
+      parseInt(data.exampleSolution2)
+    );
+  else newExamples[year][day].push(data.exampleSolution1, data.exampleSolution2);
+
   Promise.all([
-    fetch(`http://localhost:3001/inputs/${day}.txt`, {
+    fetch(`http://localhost:3001/inputs/${year}/${day}.txt`, {
       method: "PUT",
       body: data.input,
     }),
-    fetch(`http://localhost:3001/inputs/${day}example1.txt`, {
+    fetch(`http://localhost:3001/inputs/${year}/${day}example1.txt`, {
       method: "PUT",
       body: data.example1,
     }),
-    fetch(`http://localhost:3001/inputs/${day}example2.txt`, {
+    fetch(`http://localhost:3001/inputs/${year}/${day}example2.txt`, {
       method: "PUT",
       body: data.example2,
     }),
@@ -304,21 +347,27 @@ function saveData() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newExamples),
     }),
-    fetch(`http://localhost:3001/create-day/${day}`, {
+    fetch(`http://localhost:3001/create-day/${year}/${day}`, {
       method: "POST",
     }),
   ])
     .then(() => {
       console.log("Files and examples.json updated successfully");
-      if(data.outputType === 0)
-        examples.value[day] = [
+      const examplesForYear = examples.value[year] || {};
+      if (data.outputType === 0)
+        examplesForYear[day] = [
           parseInt(data.exampleSolution1),
           parseInt(data.exampleSolution2),
         ];
-      else examples.value[day] = [
+      else
+        examplesForYear[day] = [
           data.exampleSolution1,
           data.exampleSolution2,
         ];
+      examples.value = {
+        ...examples.value,
+        [year]: examplesForYear,
+      };
     })
     .catch((error) =>
       console.error("Error saving files or examples.json:", error)
@@ -326,16 +375,4 @@ function saveData() {
 
   closeDialog();
 }
-
-const dayNumbers = Array.from({ length: 25 }, (_, i) => i + 1);
-const dayFiles = import.meta.glob("@/components/days/*/solve.js");
-const days = ref(
-  Object.keys(dayFiles)
-    .map((filePath) => {
-      const day = filePath.split("/days/")[1]?.split("/")[0];
-      return day ? parseInt(day) : null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => a - b)
-);
 </script>

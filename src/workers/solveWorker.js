@@ -1,8 +1,9 @@
 self.onmessage = async function (event) {
-    const { type, day, inputs, part, example, differentExamples, peek } = event.data;
+    const { type, year, day, inputs, part, example, differentExamples, peek } = event.data;
 
     try {
-        const solverModule = await import(`../components/days/${day}/solve.js`);
+        const targetYear = year ?? 2024;
+        const solverModule = await import(`../components/days/${targetYear}/${day}/solve.js`);
         const { solvePart1, solvePart2 } = solverModule;
 
         if (type === "solvePart1") {

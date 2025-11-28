@@ -200,6 +200,7 @@
         :inputs="inputs"
         :exampleInputs="exampleInputs"
         :part="part"
+        :year="year"
         :day="day"
         :differentExamples="differentExamples"
         :dataLoaded="dataLoaded"
@@ -215,6 +216,10 @@ import { ref, watch } from "vue";
 import DayComponent from "@/components/days/day.vue";
 
 const props = defineProps({
+  year: {
+    type: Number,
+    required: true,
+  },
   day: {
     type: Number,
     required: true,
@@ -260,6 +265,8 @@ const copyToClipboard = async () => {
 
 const handleExampleResults = ref((results) => (exampleResults.value = results));
 
+const basePath = import.meta.env.BASE_URL || "/";
+
 const loadDayData = async (day) => {
   dataLoaded.value = false;
   let transitionResolve,
@@ -271,24 +278,14 @@ const loadDayData = async (day) => {
   exampleText.value = "";
   exampleTexts.value = ["", ""];
   try {
-    const parseModule = await import(`@/components/days/${day}/parseInput.js`);
+    const parseModule = await import(
+      `@/components/days/${props.year}/${day}/parseInput.js`
+    );
     parseInput.value = parseModule.parseInput;
-    const inputUrl =
-      process.env.NODE_ENV === "production"
-        ? `/advent-of-code-2024/inputs/${day}.txt`
-        : `/inputs/${day}.txt`;
-    const exampleUrl =
-      process.env.NODE_ENV === "production"
-        ? `/advent-of-code-2024/inputs/${day}example.txt`
-        : `/inputs/${day}example.txt`;
-    const examplePart1Url =
-      process.env.NODE_ENV === "production"
-        ? `/advent-of-code-2024/inputs/${day}example1.txt`
-        : `/inputs/${day}example1.txt`;
-    const examplePart2Url =
-      process.env.NODE_ENV === "production"
-        ? `/advent-of-code-2024/inputs/${day}example2.txt`
-        : `/inputs/${day}example2.txt`;
+    const inputUrl = `${basePath}inputs/${props.year}/${day}.txt`;
+    const exampleUrl = `${basePath}inputs/${props.year}/${day}example.txt`;
+    const examplePart1Url = `${basePath}inputs/${props.year}/${day}example1.txt`;
+    const examplePart2Url = `${basePath}inputs/${props.year}/${day}example2.txt`;
     text.value = await (await fetch(inputUrl)).text();
     exampleText.value = await (await fetch(exampleUrl))
       .text()
@@ -315,12 +312,11 @@ const loadDayData = async (day) => {
   } catch (error) {
     console.error(`Failed to load data for day ${day}:`, error);
   }
-  console.log(props.examples);
 };
 
 watch(
-  () => props.day,
-  async (newDay) => {
+  () => [props.year, props.day],
+  async ([, newDay]) => {
     await loadDayData(newDay);
   },
   { immediate: true }

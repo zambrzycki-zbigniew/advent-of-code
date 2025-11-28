@@ -4,7 +4,7 @@
     ref="mapContainer"
     style="position: relative; width: 100%; height: 100%; overflow: hidden;"
   >
-    <!-- Przycisk uruchamiania animacji -->
+    <!-- Animation start button -->
     <div style="position: absolute; top: 10px; left: 10px; z-index: 10;">
       <v-btn @click="startAnimation" :disabled="animationRunning">Start Animation</v-btn>
     </div>
@@ -42,6 +42,7 @@ const animationRunning = ref(false);
 const cellWidth = ref(0);
 const cellHeight = ref(0);
 
+/** Resize the PIXI renderer to the container and redraw items. */
 function resizeApp() {
   if (!mapContainer.value) return;
   const containerRect = mapContainer.value.getBoundingClientRect();
@@ -53,6 +54,7 @@ function resizeApp() {
   drawItems();
 }
 
+/** Draw current items at their coordinates using the shared container. */
 function drawItems() {
   stageContainer.removeChildren();
   for (const item of props.items) {
@@ -60,6 +62,7 @@ function drawItems() {
   }
 }
 
+/** Ask the worker to start streaming animation steps. */
 function startAnimation() {
   if (!worker || animationRunning.value) return;
   worker.postMessage({ type: 'solvePart2', inputs: [props.mapX, props.mapY, props.items] });
@@ -67,11 +70,15 @@ function startAnimation() {
   emit('animationStarted');
 }
 
+/**
+ * Apply updates coming from the worker and keep the UI in sync.
+ * @param {MessageEvent} e worker message event
+ */
 function onWorkerMessage(e) {
   const msg = e.data;
 
   if (msg.type === 'animationActions') {
-    // Przetwarzanie akcji animacji
+    // Apply animation actions emitted by the worker
     for (const action of msg.actions) {
       const item = props.items.find((i) => i.id === action.id);
       if (item) {
@@ -79,7 +86,7 @@ function onWorkerMessage(e) {
           item.x = action.args.x;
           item.y = action.args.y;
         }
-        // Można dodać obsługę innych akcji
+        // Add support for other action types here
       }
     }
     drawItems();
@@ -120,7 +127,7 @@ onUnmounted(() => {
 <style scoped>
 .map-container {
   width: 100%;
-  height: 400px; /* przykładowa wysokość */
+  height: 400px; /* example height */
   position: relative;
 }
 </style>

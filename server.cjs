@@ -6,26 +6,30 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 3001;
+const DEFAULT_YEAR = 2024;
 
-// Włącz CORS
+/** Enable CORS so the Vite frontend can call the helper endpoints locally. */
 app.use(cors());
 
-// Middleware do parsowania JSON i plain text
+/** Parse JSON and plain text bodies sent from the UI helper tools. */
 app.use(bodyParser.text());
 app.use(bodyParser.json());
 
-// Endpoint do zapisywania plików w /inputs
+/**
+ * PUT /inputs/:filename
+ * Writes the provided body into public/inputs for quick local iteration.
+ */
 app.put('/inputs/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'public', 'inputs', filename);
 
-  // Tworzenie katalogu, jeśli nie istnieje
+  // Create the directory if it does not exist
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  // Zapisywanie pliku
+  // Persist the uploaded file
   fs.writeFile(filePath, req.body, (err) => {
     if (err) {
       console.error(`Error saving file ${filename}:`, err);
@@ -35,32 +39,43 @@ app.put('/inputs/:filename', (req, res) => {
   });
 });
 
-// Endpoint do zapisywania lub nadpisywania /examples.json
+/**
+ * PUT /examples
+ * Merges incoming example outputs into public/examples.json.
+ * Accepts both legacy { "1": [...] } and multi-year { "2024": { "1": [...] } } shapes.
+ */
 app.put('/examples', (req, res) => {
   const examplesFilePath = path.join(__dirname, 'public', 'examples.json');
-  const newExamples = req.body; // JSON z nowymi wartościami
+  const newExamples = req.body;
 
-  // Odczytaj istniejący plik
+  // Read the existing file
   fs.readFile(examplesFilePath, 'utf8', (err, data) => {
     let examples = {};
 
     if (!err && data) {
       try {
-        examples = JSON.parse(data); // Parsowanie istniejących danych
+        examples = JSON.parse(data);
       } catch (parseErr) {
         console.error('Error parsing existing examples.json:', parseErr);
       }
     }
 
-    // Aktualizuj wartości
-    Object.keys(newExamples).forEach((day) => {
-      examples[day] = newExamples[day];
+    const isLegacyShape =
+      newExamples && !Array.isArray(newExamples) && Object.values(newExamples).every((v) => Array.isArray(v));
+
+    const mergeTarget = isLegacyShape ? { [DEFAULT_YEAR]: newExamples } : newExamples;
+
+    Object.entries(mergeTarget || {}).forEach(([year, days]) => {
+      if (!examples[year]) examples[year] = {};
+      Object.keys(days || {}).forEach((day) => {
+        examples[year][day] = days[day];
+      });
     });
 
-    // Zapisz zaktualizowane dane
-    fs.writeFile(examplesFilePath, JSON.stringify(examples, null, 2), (err) => {
-      if (err) {
-        console.error('Error saving examples.json:', err);
+    // Save the updated data
+    fs.writeFile(examplesFilePath, JSON.stringify(examples, null, 2), (writeErr) => {
+      if (writeErr) {
+        console.error('Error saving examples.json:', writeErr);
         return res.status(500).send('Error saving examples.json');
       }
       res.send('Examples.json updated successfully');
@@ -68,12 +83,13 @@ app.put('/examples', (req, res) => {
   });
 });
 
-// Endpoint do tworzenia plików /src/components/days/${day}/parseInput.js i solve.js
-app.post('/create-day/:day', (req, res) => {
-  const day = req.params.day;
-  const basePath = path.join(__dirname, 'src', 'components', 'days', day);
+/**
+ * POST /create-day/:year/:day
+ * Ensures parseInput.js and solve.js stubs exist for a given year/day.
+ */
+function createDayFiles(year, day, res) {
+  const basePath = path.join(__dirname, 'src', 'components', 'days', year, day);
 
-  // Upewnij się, że katalog istnieje
   if (!fs.existsSync(basePath)) {
     fs.mkdirSync(basePath, { recursive: true });
   }
@@ -94,7 +110,6 @@ export function solvePart2(...input) {
 `,
   };
 
-  // Tworzenie plików, jeśli nie istnieją
   Object.entries(files).forEach(([filename, content]) => {
     const filePath = path.join(basePath, filename);
     if (!fs.existsSync(filePath)) {
@@ -102,10 +117,20 @@ export function solvePart2(...input) {
     }
   });
 
-  res.send(`Files created for day ${day}`);
+  res.send(`Files created for ${year} day ${day}`);
+}
+
+app.post('/create-day/:year/:day', (req, res) => {
+  const { year, day } = req.params;
+  createDayFiles(year, day, res);
 });
 
-// Start serwera
+app.post('/create-day/:day', (req, res) => {
+  const day = req.params.day;
+  createDayFiles(DEFAULT_YEAR, day, res);
+});
+
+// Start the helper server
 app.listen(PORT, () => {
   console.log(`Dev server running at http://localhost:${PORT}`);
 });
