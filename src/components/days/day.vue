@@ -9,8 +9,9 @@
         <v-container class="ma-0 pa-0 ml-3" min-width="150px">
           <v-row>
             <v-col>
-              <div v-if="result[0]">{{ result[0] }}</div>
-              <v-progress-circular indeterminate v-else />
+              <div v-if="result[0] !== null">{{ result[0] }}</div>
+              <v-progress-circular indeterminate v-else-if="canRun" />
+              <div v-else class="text-caption">No input yet</div>
             </v-col>
           </v-row>
         </v-container>
@@ -25,8 +26,9 @@
         <v-container class="ma-0 pa-0 ml-3" min-width="150px">
           <v-row>
             <v-col>
-              <div v-if="result[1]">{{ result[1] }}</div>
-              <v-progress-circular indeterminate v-else />
+              <div v-if="result[1] !== null">{{ result[1] }}</div>
+              <v-progress-circular indeterminate v-else-if="canRun" />
+              <div v-else class="text-caption">No input yet</div>
             </v-col>
           </v-row>
         </v-container>
@@ -154,6 +156,7 @@ const exampleResult = ref([null, null]);
 const result = ref([null, null]);
 const isCalculating = ref(false);
 let worker;
+const canRun = computed(() => props.inputs && props.inputs.length > 0);
 
 const peekInputText = ref("");
 const peekPart1Solution = ref(null);
@@ -265,7 +268,7 @@ onMounted(() => {
     ],
     ([newInputs, newPart, newExample, newDifferentExamples, newDataLoaded]) => {
       allowPeek.value = false;
-      if (newInputs && newDataLoaded) {
+      if (newInputs && newInputs.length > 0 && newDataLoaded) {
         isCalculating.value = true;
         if (newExample && newExample.length > 0) {
           if (newPart === 1 || newPart === null) {

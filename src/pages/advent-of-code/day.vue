@@ -208,6 +208,16 @@
         @onExample="handleExampleResults"
       />
     </v-container>
+    <v-container
+      v-else
+      class="d-flex align-center justify-center"
+      style="min-height: 300px"
+    >
+      <div class="text-center">
+        <v-progress-circular indeterminate size="48" class="mb-3" />
+        <div class="text-subtitle-2">Loading input and examples…</div>
+      </div>
+    </v-container>
   </Transition>
 </template>
 
@@ -267,6 +277,19 @@ const handleExampleResults = ref((results) => (exampleResults.value = results));
 
 const basePath = import.meta.env.BASE_URL || "/";
 
+const safeFetchText = async (url) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const txt = await res.text();
+    if (!txt || txt.includes("<!DOCTYPE html>")) return null;
+    return txt;
+  } catch (err) {
+    console.error("Failed to fetch text", url, err);
+    return null;
+  }
+};
+
 const loadDayData = async (day) => {
   dataLoaded.value = false;
   let transitionResolve,
@@ -286,28 +309,26 @@ const loadDayData = async (day) => {
     const exampleUrl = `${basePath}inputs/${props.year}/${day}example.txt`;
     const examplePart1Url = `${basePath}inputs/${props.year}/${day}example1.txt`;
     const examplePart2Url = `${basePath}inputs/${props.year}/${day}example2.txt`;
-    text.value = await (await fetch(inputUrl)).text();
-    exampleText.value = await (await fetch(exampleUrl))
-      .text()
-      .catch(() => null);
-    exampleTexts.value[0] = await (await fetch(examplePart1Url))
-      .text()
-      .catch(() => null);
-    exampleTexts.value[1] = await (await fetch(examplePart2Url))
-      .text()
-      .catch(() => null);
+    text.value = await safeFetchText(inputUrl);
+    exampleText.value = await safeFetchText(exampleUrl);
+    exampleTexts.value[0] = await safeFetchText(examplePart1Url);
+    exampleTexts.value[1] = await safeFetchText(examplePart2Url);
     differentExamples.value =
       !!exampleTexts.value[0] &&
       !exampleTexts.value[0].includes("<!DOCTYPE html>") &&
       !!exampleTexts.value[1] &&
       !exampleTexts.value[1].includes("<!DOCTYPE html>");
-    inputs.value = parseInput.value(text.value);
-    if (differentExamples.value)
+    if (text.value) {
+      inputs.value = parseInput.value(text.value);
+    } else {
+      inputs.value = [];
+    }
+    if (differentExamples.value && exampleTexts.value[0] && exampleTexts.value[1])
       exampleInputs.value = [
         parseInput.value(exampleTexts.value[0]),
         parseInput.value(exampleTexts.value[1]),
       ];
-    else exampleInputs.value = parseInput.value(exampleText.value);
+    else if (exampleText.value) exampleInputs.value = parseInput.value(exampleText.value);
     transitionPromise.then(() => (dataLoaded.value = true));
   } catch (error) {
     console.error(`Failed to load data for day ${day}:`, error);

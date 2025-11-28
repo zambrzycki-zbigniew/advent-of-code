@@ -1,8 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router/auto';
-import { setupLayouts } from 'virtual:generated-layouts';
 import { routes as autoRoutes } from 'vue-router/auto-routes';
 import GenericDayComponent from '@/pages/advent-of-code/day.vue';
 import ArcCalculatorComponent from '@/pages/minecraft/arcCalculator.vue';
+import { h, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 const defaultYear = 2024;
 
@@ -13,6 +14,65 @@ const arcCalculatorRoute = {
 };
 
 const dayFiles = import.meta.glob('@/components/days/*/*/solve.js');
+const dayMap = {};
+
+Object.keys(dayFiles).forEach((filePath) => {
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  const match = normalizedPath.match(/days\/([^/]+)\/([^/]+)\/solve\.js$/);
+  if (!match) return;
+  const year = parseInt(match[1], 10);
+  const day = parseInt(match[2], 10);
+  if (!dayMap[year]) dayMap[year] = new Set();
+  dayMap[year].add(day);
+});
+
+const computeDefaultTarget = async () => {
+  const base = import.meta.env.BASE_URL || '/';
+  let yearsConfig = {};
+  try {
+    const res = await fetch(`${base}years.json`, { cache: 'no-store' });
+    if (res.ok) yearsConfig = await res.json();
+  } catch (err) {
+    console.error('Failed to fetch years.json', err);
+  }
+
+  const yearsFromFiles = Object.keys(dayMap).map((y) => parseInt(y, 10));
+  const yearsFromConfig = Object.keys(yearsConfig).map((y) => parseInt(y, 10));
+  const years = [...yearsFromFiles, ...yearsFromConfig, defaultYear].filter(Boolean);
+  if (!years.length) return `/${defaultYear}/days/1`;
+
+  const targetYear = Math.max(...years);
+
+  const dayCount =
+    yearsConfig[targetYear] !== undefined
+      ? parseInt(yearsConfig[targetYear], 10)
+      : dayMap[targetYear]
+        ? Math.max(...dayMap[targetYear])
+        : 25;
+
+  const hasInput = async (year, day) => {
+    const url = `${base}inputs/${year}/${day}.txt`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1200);
+    try {
+      const res = await fetch(url, { cache: 'no-store', method: 'GET', signal: controller.signal });
+      if (!res.ok) return false;
+      const txt = await res.text();
+      return !!txt && !txt.includes('<!DOCTYPE html>');
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const checks = await Promise.all(
+    Array.from({ length: dayCount }, (_, i) => i + 1).map(async (d) => [d, await hasInput(targetYear, d)])
+  );
+  const missing = checks.find(([, ok]) => !ok);
+
+  return `/${targetYear}/days/${missing ? missing[0] : 1}`;
+};
 
 const parseExamplesForYear = (year, day) => {
   const examplesForYear = examplesData[year] || examplesData;
@@ -92,10 +152,61 @@ const dayRoutes = Object.keys(dayFiles).map((filePath) => {
   ];
 }).flat().filter(Boolean);
 
-const routes = setupLayouts([
+const RedirectLoader = {
+  name: 'RedirectLoader',
+  setup() {
+    if (!document.getElementById('redirect-loader-style')) {
+      const style = document.createElement('style');
+      style.id = 'redirect-loader-style';
+      style.textContent = `
+        @keyframes redirect-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const router = useRouter();
+    onMounted(async () => {
+      const target = await computeDefaultTarget();
+      router.replace(target || '/');
+    });
+    return () =>
+      h(
+        'div',
+        {
+          style: {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '60vh',
+            gap: '12px',
+            flexDirection: 'column',
+          },
+        },
+        [
+          h('div', { class: 'text-subtitle-1' }, 'Loading...'),
+          h('div', {
+            class: 'loading-spinner',
+            style: {
+              width: '32px',
+              height: '32px',
+              border: '3px solid #888',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'redirect-spin 1s linear infinite',
+            },
+          }),
+        ]
+      );
+  },
+};
+
+const routes = [
   {
     path: '/',
-    redirect: `/${defaultYear}/days/1`,
+    component: RedirectLoader,
   },
   ...autoRoutes,
   ...dayRoutes,
@@ -103,8 +214,16 @@ const routes = setupLayouts([
     path: '/days/:day(\\d+)',
     redirect: (route) => `/${defaultYear}/days/${route.params.day}`,
   },
+  {
+    path: '/:pathMatch(.*)*',
+    beforeEnter: async (to, from, next) => {
+      const target = await computeDefaultTarget();
+      if (!target || target === to.fullPath) return next();
+      next(target);
+    },
+  },
   arcCalculatorRoute,
-]);
+];
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),

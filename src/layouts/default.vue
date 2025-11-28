@@ -12,18 +12,54 @@
       </v-list-item>
 
       <v-divider></v-divider>
-      <v-list density="compact">
-        <template v-for="year in years" :key="year">
-          <v-list-subheader>{{ year }}</v-list-subheader>
+      <v-list-item v-if="isDev && !rail">
+        <v-btn
+          block
+          prepend-icon="mdi-calendar-plus"
+          @click.stop="openYearDialog"
+        >
+          Add year
+        </v-btn>
+      </v-list-item>
+
+      <v-list
+        density="compact"
+        :opened="openYears"
+        @update:opened="(val) => (openYears = val)"
+        open-strategy="single"
+      >
+        <v-list-group
+          v-for="year in years"
+          :key="year.toString()"
+          :value="year.toString()"
+        >
+          <template #activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :title="year.toString()"
+              prepend-icon="mdi-calendar"
+            />
+          </template>
+
           <v-list-item
             min-height="32"
-            v-for="day in dayNumbers"
+            v-for="day in Array.from(
+              { length: daysForYear(year) },
+              (_, i) => i + 1
+            )"
             :key="`${year}-${day}`"
-            :to="hasDay(year, day) ? `/${year}/days/${day}` : null"
-            :disabled="!hasDay(year, day)"
+            :to="
+              hasDay(year, day) && isAvailable(year, day)
+                ? `/${year}/days/${day}`
+                : null
+            "
+            :disabled="!hasDay(year, day) || !isAvailable(year, day)"
             link
           >
-            <v-list-item-title v-if="!rail" class="d-flex justify-space-between">
+            <v-list-item-title
+              v-if="!rail"
+              class="d-flex justify-space-between"
+            >
               Day {{ day }}
               <span>
                 <v-tooltip location="top">
@@ -65,7 +101,7 @@
               ></v-btn>
             </template>
           </v-list-item>
-        </template>
+        </v-list-group>
       </v-list>
     </v-navigation-drawer>
 
@@ -92,7 +128,11 @@
             v-model="dialogData.example2"
             outlined
           ></v-textarea>
-          <v-btn-toggle v-model="dialogData.outputType" mandatory @update:modelValue="console.log($event)">
+          <v-btn-toggle
+            v-model="dialogData.outputType"
+            mandatory
+            @update:modelValue="console.log($event)"
+          >
             <v-btn>Number</v-btn>
             <v-btn>String</v-btn>
           </v-btn-toggle>
@@ -115,21 +155,47 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="yearDialogVisible" max-width="500">
+      <v-card>
+        <v-card-title>Add year</v-card-title>
+        <v-card-text>
+          <v-text-field label="Year" v-model.number="newYear" type="number" />
+          <v-text-field
+            label="Day count"
+            v-model.number="newYearDayCount"
+            type="number"
+            min="1"
+            max="31"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text @click="closeYearDialog">Cancel</v-btn>
+          <v-btn text @click="saveYear">Create</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
 const isDev = process.env.NODE_ENV !== "production";
 const basePath = import.meta.env.BASE_URL || "/";
 const defaultYear = 2024;
+const openYears = ref([]);
+const yearsConfig = ref({});
 
 const drawer = ref(true);
 const rail = ref(false);
 const dialogVisible = ref(false);
 const dialogYear = ref(defaultYear);
 const dialogDay = ref(null);
+const yearDialogVisible = ref(false);
+const newYear = ref("");
+const newYearDayCount = ref(25);
 const dialogData = ref({
   input: "",
   example1: "",
@@ -164,10 +230,30 @@ const years = computed(() => {
   const list = Object.keys(dayMap.value)
     .map((year) => parseInt(year, 10))
     .sort((a, b) => b - a);
-  return list.length ? list : [defaultYear];
+  const configYears = Object.keys(yearsConfig.value).map((y) =>
+    parseInt(y, 10)
+  );
+  const merged = Array.from(
+    new Set([...list, ...configYears, defaultYear])
+  ).sort((a, b) => b - a);
+  return merged;
 });
 
+const daysForYear = (year) => {
+  if (yearsConfig.value[year]) return parseInt(yearsConfig.value[year], 10);
+  return dayMap.value[year]?.length || 25;
+};
+
 const hasDay = (year, day) => !!dayMap.value[year]?.includes(day);
+const dayAvailability = ref({});
+const setAvailability = (year, day, available) => {
+  if (!dayAvailability.value[year]) dayAvailability.value[year] = {};
+  dayAvailability.value[year][day] = available;
+  dayAvailability.value = { ...dayAvailability.value };
+};
+const isAvailable = (year, day) => dayAvailability.value[year]?.[day] === true;
+const sse = ref(null);
+const route = useRoute();
 
 async function getLeaderboardData(year = defaultYear) {
   const urls = [
@@ -217,6 +303,87 @@ async function fetchExamples() {
 onMounted(() => {
   fetchExamples();
 });
+
+onMounted(() => {
+  if (!isDev) return;
+  try {
+    const origin = window.location.origin.replace(/:\d+$/, ":3001");
+    const es = new EventSource(`${origin}/inputs-events`);
+    es.onmessage = () => {
+      location.reload();
+    };
+    sse.value = es;
+  } catch (err) {
+    console.error("Failed to initialize inputs watcher SSE:", err);
+  }
+});
+
+onUnmounted(() => {
+  if (sse.value) sse.value.close();
+});
+
+watch(
+  years,
+  (val) => {
+    if (val?.length && openYears.value.length === 0) {
+      openYears.value = [val[0].toString()];
+    }
+  },
+  { immediate: true }
+);
+
+async function fetchYearsConfig() {
+  try {
+    const response = await fetch(`${basePath}years.json`);
+    if (response.ok) {
+      yearsConfig.value = await response.json();
+    }
+  } catch (error) {
+    console.error("Error fetching years.json:", error);
+  }
+}
+
+fetchYearsConfig();
+
+watch(
+  () => route.fullPath,
+  (path) => {
+    const match = path.match(/\/(\d{4})\/days\/\d+/);
+    const activeYear = match ? match[1] : null;
+    if (!activeYear) return;
+    openYears.value = [activeYear];
+  },
+  { immediate: true }
+);
+
+async function fetchAvailability() {
+  const tasks = [];
+  years.value.forEach((year) => {
+    const maxDay = daysForYear(year);
+    for (let day = 1; day <= maxDay; day += 1) {
+      if (!hasDay(year, day)) continue;
+      const url = `${basePath}inputs/${year}/${day}.txt`;
+      tasks.push(
+        fetch(url)
+          .then((res) => (res.ok ? res.text() : null))
+          .then((txt) => {
+            const ok = !!(txt && !txt.includes("<!DOCTYPE html>"));
+            setAvailability(year, day, ok);
+          })
+          .catch(() => setAvailability(year, day, false))
+      );
+    }
+  });
+  await Promise.all(tasks);
+}
+
+watch(
+  () => [years.value, yearsConfig.value],
+  () => {
+    fetchAvailability();
+  },
+  { immediate: true, deep: true }
+);
 
 function formatTimestamp(unixTimestamp) {
   const date = new Date(unixTimestamp * 1000);
@@ -327,30 +494,87 @@ function saveData() {
       parseInt(data.exampleSolution1),
       parseInt(data.exampleSolution2)
     );
-  else newExamples[year][day].push(data.exampleSolution1, data.exampleSolution2);
+  else
+    newExamples[year][day].push(data.exampleSolution1, data.exampleSolution2);
 
-  Promise.all([
+  const requests = [];
+
+  // always save main input
+  requests.push(
     fetch(`http://localhost:3001/inputs/${year}/${day}.txt`, {
       method: "PUT",
       body: data.input,
-    }),
-    fetch(`http://localhost:3001/inputs/${year}/${day}example1.txt`, {
-      method: "PUT",
-      body: data.example1,
-    }),
-    fetch(`http://localhost:3001/inputs/${year}/${day}example2.txt`, {
-      method: "PUT",
-      body: data.example2,
-    }),
+    })
+  );
+
+  const hasExample1 = !!data.example1;
+  const hasExample2 = !!data.example2;
+
+  if (hasExample1 && hasExample2) {
+    // two examples: write example1/example2 and remove single example file
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example1.txt`, {
+        method: "PUT",
+        body: data.example1,
+      })
+    );
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example2.txt`, {
+        method: "PUT",
+        body: data.example2,
+      })
+    );
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example.txt`, {
+        method: "DELETE",
+      })
+    );
+  } else if (hasExample1 && !hasExample2) {
+    // single example goes to example.txt; clear any split files
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example.txt`, {
+        method: "PUT",
+        body: data.example1,
+      })
+    );
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example1.txt`, {
+        method: "DELETE",
+      })
+    );
+    requests.push(
+      fetch(`http://localhost:3001/inputs/${year}/${day}example2.txt`, {
+        method: "DELETE",
+      })
+    );
+  } else {
+    // no examples entered, clean up
+    ["example.txt", "example1.txt", "example2.txt"].forEach((suffix) => {
+      requests.push(
+        fetch(`http://localhost:3001/inputs/${year}/${day}${suffix}`, {
+          method: "DELETE",
+        })
+      );
+    });
+  }
+
+  // merge examples.json
+  requests.push(
     fetch(`http://localhost:3001/examples`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newExamples),
-    }),
+    })
+  );
+
+  // ensure stubs exist
+  requests.push(
     fetch(`http://localhost:3001/create-day/${year}/${day}`, {
       method: "POST",
-    }),
-  ])
+    })
+  );
+
+  Promise.all(requests)
     .then(() => {
       console.log("Files and examples.json updated successfully");
       const examplesForYear = examples.value[year] || {};
@@ -360,10 +584,7 @@ function saveData() {
           parseInt(data.exampleSolution2),
         ];
       else
-        examplesForYear[day] = [
-          data.exampleSolution1,
-          data.exampleSolution2,
-        ];
+        examplesForYear[day] = [data.exampleSolution1, data.exampleSolution2];
       examples.value = {
         ...examples.value,
         [year]: examplesForYear,
@@ -374,5 +595,45 @@ function saveData() {
     );
 
   closeDialog();
+}
+
+function openYearDialog() {
+  newYear.value = "";
+  newYearDayCount.value = 25;
+  yearDialogVisible.value = true;
+}
+
+function closeYearDialog() {
+  yearDialogVisible.value = false;
+}
+
+function saveYear() {
+  if (!isDev) return;
+  const year = parseInt(newYear.value, 10);
+  const dayCount = parseInt(newYearDayCount.value, 10);
+  if (!year || !dayCount) return;
+
+  // Update local config immediately for UI
+  yearsConfig.value = {
+    ...yearsConfig.value,
+    [year]: dayCount,
+  };
+
+  // Persist config and scaffold files
+  fetch(`http://localhost:3001/years`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ [year]: dayCount }),
+  }).catch((error) => console.error("Error saving years.json:", error));
+
+  fetch(`http://localhost:3001/create-year`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ year, dayCount }),
+  }).catch((error) => console.error("Error creating year files:", error));
+
+  // Pre-expand the new year
+  openYears.value = [year.toString()];
+  yearDialogVisible.value = false;
 }
 </script>
