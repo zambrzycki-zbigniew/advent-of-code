@@ -2,7 +2,7 @@ name: Update GitHub Pages JSON
 
 on:
   schedule:
-    - cron: '*/60 * * * *'
+    - cron: '0 * * * *' # hourly; steps gate by date window
   workflow_dispatch:
 
 permissions:
@@ -12,21 +12,44 @@ jobs:
   update-json:
     runs-on: ubuntu-latest
     steps:
+      - name: Check date window
+        id: window
+        run: |
+          MONTH=$(date -u +%m)
+          DAY=$(date -u +%d)
+          YEAR=$(date -u +%Y)
+          if [ "$MONTH" = "01" ]; then
+            AOC_YEAR=$((YEAR-1))
+          else
+            AOC_YEAR=$YEAR
+          fi
+          RUN_WINDOW=false
+          if [ "$MONTH" = "12" ] || { [ "$MONTH" = "01" ] && [ "$DAY" = "01" ]; }; then
+            RUN_WINDOW=true
+          fi
+          echo "run=${RUN_WINDOW}" >> "$GITHUB_OUTPUT"
+          echo "year=${AOC_YEAR}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
+        if: ${{ steps.window.outputs.run == 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: ${{ steps.window.outputs.run == 'true' }}
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Fetch Leaderboard Data
+        if: ${{ steps.window.outputs.run == 'true' }}
         env:
           AOC_SESSION: ${{ secrets.AOC_SESSION }}
         run: |
-          curl -s -H "Cookie: session=${AOC_SESSION}" https://adventofcode.com/2024/leaderboard/private/view/3744441.json -o leaderboard.json
+          YEAR="${{ steps.window.outputs.year }}"
+          curl -s -H "Cookie: session=${AOC_SESSION}" "https://adventofcode.com/${YEAR}/leaderboard/private/view/3744441.json" -o leaderboard.json
 
       - name: Extract Member Data
+        if: ${{ steps.window.outputs.run == 'true' }}
         run: |
           python -c "
           import os
@@ -36,17 +59,22 @@ jobs:
           member_data = data['members']['3788958']
           with open('public/leaderboard_member_3788958.json', 'w') as f:
               json.dump(member_data, f, indent=2)
-          year = os.getenv('AOC_YEAR', '2024')
+          year = '${{ steps.window.outputs.year }}'
           with open(f'public/leaderboard_member_{year}.json', 'w') as f:
               json.dump(member_data, f, indent=2)
           "
 
       - name: Commit and Push changes
+        if: ${{ steps.window.outputs.run == 'true' }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add public/leaderboard_member_3788958.json
-          git commit -m "Update member data"
-          git push
+          git add public/leaderboard_member_3788958.json public/leaderboard_member_${{ steps.window.outputs.year }}.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update member data"
+            git push
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
