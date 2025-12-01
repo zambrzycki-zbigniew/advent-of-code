@@ -254,38 +254,34 @@ const setAvailability = (year, day, available) => {
 const isAvailable = (year, day) => dayAvailability.value[year]?.[day] === true;
 const sse = ref(null);
 const route = useRoute();
+const fetchedLeaderboardYears = ref(new Set());
 
-async function getLeaderboardData(year = defaultYear) {
-  const urls = [
-    `${basePath}leaderboard_member_${year}.json`,
-    `${basePath}leaderboard_member_3788958.json`,
-  ];
-  for (const url of urls) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.error(`Failed to fetch from ${url}: ${response.statusText}`);
-        continue;
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.warn(`Unexpected content type from ${url}: ${contentType}`);
-        continue;
-      }
-
-      const data = await response.json();
-      completionByYear.value[year] = data.completion_day_level || data;
+async function fetchLeaderboard(year) {
+  if (fetchedLeaderboardYears.value.has(year)) return;
+  const url = `${basePath}leaderboard_member_${year}.json`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Failed to fetch from ${url}: ${response.statusText}`);
       return;
-    } catch (error) {
-      console.error(`Error fetching from ${url}:`, error);
     }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.warn(`Unexpected content type from ${url}: ${contentType}`);
+      return;
+    }
+
+    const data = await response.json();
+    completionByYear.value[year] = data.completion_day_level || data;
+    fetchedLeaderboardYears.value = new Set([
+      ...fetchedLeaderboardYears.value,
+      year,
+    ]);
+  } catch (error) {
+    console.error(`Error fetching leaderboard for ${year}:`, error);
   }
-
-  console.error("Failed to fetch leaderboard data from all sources.");
 }
-
-getLeaderboardData();
 
 async function fetchExamples() {
   try {
@@ -381,6 +377,7 @@ watch(
   () => [years.value, yearsConfig.value],
   () => {
     fetchAvailability();
+    years.value.forEach((year) => fetchLeaderboard(year));
   },
   { immediate: true, deep: true }
 );

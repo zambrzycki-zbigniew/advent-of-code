@@ -71,7 +71,6 @@ jobs:
               print(f"::warning::Failed to parse leaderboard.json: {e}")
               sys.exit(0)  # fail-soft: skip writing files but keep job green
 
-          Path("public/leaderboard_member_3788958.json").write_text(json.dumps(member_data, indent=2))
           year = "${{ steps.window.outputs.year }}"
           Path(f"public/leaderboard_member_{year}.json").write_text(json.dumps(member_data, indent=2))
           PY
@@ -82,9 +81,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           files=""
-          if [ -f public/leaderboard_member_3788958.json ]; then
-            files="$files public/leaderboard_member_3788958.json"
-          fi
           if [ -f public/leaderboard_member_${{ steps.window.outputs.year }}.json ]; then
             files="$files public/leaderboard_member_${{ steps.window.outputs.year }}.json"
           fi
