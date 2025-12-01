@@ -69,9 +69,10 @@ const computeDefaultTarget = async () => {
   const checks = await Promise.all(
     Array.from({ length: dayCount }, (_, i) => i + 1).map(async (d) => [d, await hasInput(targetYear, d)])
   );
-  const missing = checks.find(([, ok]) => !ok);
+  const completedDays = checks.filter(([, ok]) => ok).map(([d]) => d);
+  const targetDay = completedDays.length ? Math.max(...completedDays) : 1;
 
-  return `/${targetYear}/days/${missing ? missing[0] : 1}`;
+  return `/${targetYear}/days/${targetDay}`;
 };
 
 const parseExamplesForYear = (year, day) => {
