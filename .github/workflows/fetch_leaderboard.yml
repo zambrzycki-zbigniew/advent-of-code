@@ -47,30 +47,52 @@ jobs:
         run: |
           YEAR="${{ steps.window.outputs.year }}"
           curl -s -H "Cookie: session=${AOC_SESSION}" "https://adventofcode.com/${YEAR}/leaderboard/private/view/3744441.json" -o leaderboard.json
+          if [ ! -s leaderboard.json ]; then
+            echo "::error::leaderboard.json is empty. Check AOC_SESSION."
+            exit 1
+          fi
 
       - name: Extract Member Data
         if: ${{ steps.window.outputs.run == 'true' }}
         run: |
-          python -c "
+          python - <<'PY'
           import json, sys
           from pathlib import Path
+
+          p = Path("leaderboard.json")
+          if not p.exists() or p.stat().st_size == 0:
+              print("::warning::leaderboard.json missing or empty, skipping write")
+              sys.exit(0)
+
           try:
-              data = json.loads(Path('leaderboard.json').read_text())
-              member_data = data['members']['3788958']
+              data = json.loads(p.read_text())
+              member_data = data["members"]["3788958"]
           except Exception as e:
-              print(f'Failed to parse leaderboard.json: {e}', file=sys.stderr)
-              sys.exit(0)  # fail-soft to keep workflow green if AoC fetch is empty
-          Path('public/leaderboard_member_3788958.json').write_text(json.dumps(member_data, indent=2))
-          year = '${{ steps.window.outputs.year }}'
-          Path(f'public/leaderboard_member_{year}.json').write_text(json.dumps(member_data, indent=2))
-          "
+              print(f"::warning::Failed to parse leaderboard.json: {e}")
+              sys.exit(0)  # fail-soft: skip writing files but keep job green
+
+          Path("public/leaderboard_member_3788958.json").write_text(json.dumps(member_data, indent=2))
+          year = "${{ steps.window.outputs.year }}"
+          Path(f"public/leaderboard_member_{year}.json").write_text(json.dumps(member_data, indent=2))
+          PY
 
       - name: Commit and Push changes
         if: ${{ steps.window.outputs.run == 'true' }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add public/leaderboard_member_3788958.json public/leaderboard_member_${{ steps.window.outputs.year }}.json
+          files=""
+          if [ -f public/leaderboard_member_3788958.json ]; then
+            files="$files public/leaderboard_member_3788958.json"
+          fi
+          if [ -f public/leaderboard_member_${{ steps.window.outputs.year }}.json ]; then
+            files="$files public/leaderboard_member_${{ steps.window.outputs.year }}.json"
+          fi
+          if [ -z "$files" ]; then
+            echo "No files to add"
+            exit 0
+          fi
+          git add $files
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
