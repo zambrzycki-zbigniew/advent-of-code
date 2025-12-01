@@ -52,16 +52,17 @@ jobs:
         if: ${{ steps.window.outputs.run == 'true' }}
         run: |
           python -c "
-          import os
-          import json
-          with open('leaderboard.json') as f:
-              data = json.load(f)
-          member_data = data['members']['3788958']
-          with open('public/leaderboard_member_3788958.json', 'w') as f:
-              json.dump(member_data, f, indent=2)
+          import json, sys
+          from pathlib import Path
+          try:
+              data = json.loads(Path('leaderboard.json').read_text())
+              member_data = data['members']['3788958']
+          except Exception as e:
+              print(f'Failed to parse leaderboard.json: {e}', file=sys.stderr)
+              sys.exit(0)  # fail-soft to keep workflow green if AoC fetch is empty
+          Path('public/leaderboard_member_3788958.json').write_text(json.dumps(member_data, indent=2))
           year = '${{ steps.window.outputs.year }}'
-          with open(f'public/leaderboard_member_{year}.json', 'w') as f:
-              json.dump(member_data, f, indent=2)
+          Path(f'public/leaderboard_member_{year}.json').write_text(json.dumps(member_data, indent=2))
           "
 
       - name: Commit and Push changes
