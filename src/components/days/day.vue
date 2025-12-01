@@ -41,6 +41,13 @@
       v-if="!allowPeek"
       >Show solution</v-btn
     >
+    <v-btn
+      class="my-1 ml-1"
+      height="auto"
+      v-if="isDev && !allowPeek"
+      @click="devBypass"
+      >Preview for dev</v-btn
+    >
   </div>
   <Showcase :year="year" :day="day" v-if="allowPeek" />
   <v-dialog v-model="showcaseDialog" max-width="800px">
@@ -109,8 +116,9 @@
 </template>
   
   <script setup>
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import { ref, onMounted, watch, onUnmounted, computed } from "vue";
 import Showcase from "../showcase.vue";
+const isDev = process.env.NODE_ENV !== "production";
 
 const props = defineProps({
   year: {
@@ -170,6 +178,12 @@ const peekBanter = ref(
 );
 
 const closeDialog = () => {
+  showcaseDialog.value = false;
+};
+
+const devBypass = () => {
+  if (!isDev) return;
+  allowPeek.value = true;
   showcaseDialog.value = false;
 };
 

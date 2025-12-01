@@ -10,7 +10,9 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "@highlightjs/vue-plugin": "^2.1.0",
     "@mdi/font": "7.4.47",
+    "highlight.js": "^11.11.1",
     "pixi.js": "^8.14.3",
     "roboto-fontface": "*",
     "vue": "^3.5.25",
