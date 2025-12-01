@@ -17,15 +17,14 @@ export function solvePart2(...input) {
     let zeros = 0
     for (let { direction, count } of input) {
         let prev = dial
-        let turn = false;
         const rest = count % 100;
         //each 100 crosses 0 exactly once
         zeros += Math.floor(count/100)
         if (direction === 'R') dial += rest;
         else dial -= rest;
         if (dial > 99) { 
-            turn = true;
-            zeros++;
+            //if passing-over put us on 0, don't count it, let final if do that
+            if(dial !== 0) zeros++;
             dial -= 100;
         }
         if (dial < 0) {
@@ -33,8 +32,7 @@ export function solvePart2(...input) {
             if(prev !== 0) zeros++;
             dial += 100;
         }
-        //if we ended up at 0 after crossing 99, then that means we're already at the 0 we counted there
-        if(dial === 0 && !turn) zeros++
+        if(dial === 0) zeros++
     }
     return zeros;
 }
