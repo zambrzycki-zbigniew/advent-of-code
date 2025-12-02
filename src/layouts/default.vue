@@ -187,6 +187,7 @@ const basePath = import.meta.env.BASE_URL || "/";
 const defaultYear = 2024;
 const openYears = ref([]);
 const yearsConfig = ref({});
+const lastUpdated = ref({});
 
 const drawer = ref(true);
 const rail = ref(false);
@@ -300,6 +301,21 @@ onMounted(() => {
   fetchExamples();
 });
 
+async function fetchLastUpdated() {
+  try {
+    const res = await fetch(`${basePath}last-updated.json`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      lastUpdated.value = await res.json();
+    }
+  } catch (error) {
+    console.error("Error fetching last-updated.json:", error);
+  }
+}
+
+fetchLastUpdated();
+
 onMounted(() => {
   if (!isDev) return;
   try {
@@ -353,24 +369,19 @@ watch(
 );
 
 async function fetchAvailability() {
-  const tasks = [];
   years.value.forEach((year) => {
     const maxDay = daysForYear(year);
-    for (let day = 1; day <= maxDay; day += 1) {
-      if (!hasDay(year, day)) continue;
-      const url = `${basePath}inputs/${year}/${day}.txt`;
-      tasks.push(
-        fetch(url)
-          .then((res) => (res.ok ? res.text() : null))
-          .then((txt) => {
-            const ok = !!(txt && !txt.includes("<!DOCTYPE html>"));
-            setAvailability(year, day, ok);
-          })
-          .catch(() => setAvailability(year, day, false))
-      );
+    const last = parseInt(lastUpdated.value[year] || 0, 10);
+    if (last) {
+      for (let d = 1; d <= maxDay; d += 1) {
+        setAvailability(year, d, d <= last);
+      }
+    } else {
+      for (let d = 1; d <= maxDay; d += 1) {
+        setAvailability(year, d, hasDay(year, d));
+      }
     }
   });
-  await Promise.all(tasks);
 }
 
 watch(
