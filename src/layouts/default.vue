@@ -571,6 +571,15 @@ function saveData() {
     })
   );
 
+  // store last updated day for quick redirect
+  requests.push(
+    fetch(`http://localhost:3001/last-updated`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [year]: day }),
+    })
+  );
+
   Promise.all(requests)
     .then(() => {
       console.log("Files and examples.json updated successfully");

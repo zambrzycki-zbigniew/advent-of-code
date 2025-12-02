@@ -220,6 +220,39 @@ app.put('/years', (req, res) => {
   });
 });
 
+/**
+ * PUT /last-updated
+ * Merge last updated day info into public/last-updated.json.
+ * Body: { [year]: day }
+ */
+app.put('/last-updated', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'last-updated.json');
+  const incoming = req.body || {};
+
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    let stored = {};
+    if (!err && data) {
+      try {
+        stored = JSON.parse(data);
+      } catch (parseErr) {
+        console.error('Error parsing existing last-updated.json:', parseErr);
+      }
+    }
+
+    Object.entries(incoming).forEach(([year, day]) => {
+      stored[year] = day;
+    });
+
+    fs.writeFile(filePath, JSON.stringify(stored, null, 2), (writeErr) => {
+      if (writeErr) {
+        console.error('Error saving last-updated.json:', writeErr);
+        return res.status(500).send('Error saving last-updated.json');
+      }
+      res.send('last-updated.json updated successfully');
+    });
+  });
+});
+
 // Watch inputs/examples in dev and notify SSE clients to refresh
 if (process.env.NODE_ENV !== 'production') {
   const inputsRoot = path.join(__dirname, 'public', 'inputs');

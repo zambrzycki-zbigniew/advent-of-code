@@ -29,11 +29,18 @@ Object.keys(dayFiles).forEach((filePath) => {
 const computeDefaultTarget = async () => {
   const base = import.meta.env.BASE_URL || '/';
   let yearsConfig = {};
+  let lastUpdated = {};
   try {
     const res = await fetch(`${base}years.json`, { cache: 'no-store' });
     if (res.ok) yearsConfig = await res.json();
   } catch (err) {
     console.error('Failed to fetch years.json', err);
+  }
+  try {
+    const res = await fetch(`${base}last-updated.json`, { cache: 'no-store' });
+    if (res.ok) lastUpdated = await res.json();
+  } catch (err) {
+    console.error('Failed to fetch last-updated.json', err);
   }
 
   const yearsFromFiles = Object.keys(dayMap).map((y) => parseInt(y, 10));
@@ -53,7 +60,7 @@ const computeDefaultTarget = async () => {
   const hasInput = async (year, day) => {
     const url = `${base}inputs/${year}/${day}.txt`;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), 600);
     try {
       const res = await fetch(url, { cache: 'no-store', method: 'GET', signal: controller.signal });
       if (!res.ok) return false;
@@ -66,11 +73,19 @@ const computeDefaultTarget = async () => {
     }
   };
 
-  const checks = await Promise.all(
-    Array.from({ length: dayCount }, (_, i) => i + 1).map(async (d) => [d, await hasInput(targetYear, d)])
-  );
-  const completedDays = checks.filter(([, ok]) => ok).map(([d]) => d);
-  const targetDay = completedDays.length ? Math.max(...completedDays) : 1;
+  // Prefer last updated day if present for target year
+  if (lastUpdated[targetYear]) {
+    return `/${targetYear}/days/${lastUpdated[targetYear]}`;
+  }
+
+  let targetDay = 1;
+  for (let d = dayCount; d >= 1; d -= 1) {
+    const ok = await hasInput(targetYear, d);
+    if (ok) {
+      targetDay = d;
+      break;
+    }
+  }
 
   return `/${targetYear}/days/${targetDay}`;
 };
