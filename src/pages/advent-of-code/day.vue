@@ -306,13 +306,26 @@ const loadDayData = async (day) => {
     );
     parseInput.value = parseModule.parseInput;
     const inputUrl = `${basePath}inputs/${props.year}/${day}.txt`;
-    const exampleUrl = `${basePath}inputs/${props.year}/${day}example.txt`;
-    const examplePart1Url = `${basePath}inputs/${props.year}/${day}example1.txt`;
-    const examplePart2Url = `${basePath}inputs/${props.year}/${day}example2.txt`;
+    const shouldFetchExamples =
+      Array.isArray(props.examples) &&
+      props.examples.some((v) => v !== null && v !== undefined);
+    const exampleUrl = shouldFetchExamples
+      ? `${basePath}inputs/${props.year}/${day}example.txt`
+      : null;
+    const examplePart1Url = shouldFetchExamples
+      ? `${basePath}inputs/${props.year}/${day}example1.txt`
+      : null;
+    const examplePart2Url = shouldFetchExamples
+      ? `${basePath}inputs/${props.year}/${day}example2.txt`
+      : null;
     text.value = await safeFetchText(inputUrl);
-    exampleText.value = await safeFetchText(exampleUrl);
-    exampleTexts.value[0] = await safeFetchText(examplePart1Url);
-    exampleTexts.value[1] = await safeFetchText(examplePart2Url);
+    exampleText.value = exampleUrl ? await safeFetchText(exampleUrl) : null;
+    exampleTexts.value[0] = examplePart1Url
+      ? await safeFetchText(examplePart1Url)
+      : null;
+    exampleTexts.value[1] = examplePart2Url
+      ? await safeFetchText(examplePart2Url)
+      : null;
     differentExamples.value =
       !!exampleTexts.value[0] &&
       !exampleTexts.value[0].includes("<!DOCTYPE html>") &&
