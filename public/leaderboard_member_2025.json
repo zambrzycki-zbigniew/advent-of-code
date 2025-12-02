@@ -1,12 +1,12 @@
 {
-  "last_star_ts": 1764573120,
-  "name": "zambrzycki-zbigniew",
+  "stars": 2,
+  "id": 3788958,
   "local_score": 20,
   "completion_day_level": {
     "1": {
       "2": {
-        "star_index": 1,
-        "get_star_ts": 1764573120
+        "get_star_ts": 1764573120,
+        "star_index": 1
       },
       "1": {
         "star_index": 0,
@@ -14,6 +14,6 @@
       }
     }
   },
-  "id": 3788958,
-  "stars": 2
+  "name": "zambrzycki-zbigniew",
+  "last_star_ts": 1764573120
 }
