@@ -46,7 +46,7 @@
       height="auto"
       v-if="isDev && !allowPeek"
       @click="devBypass"
-      >Preview for dev</v-btn
+      >Preview</v-btn
     >
   </div>
   <Showcase :year="year" :day="day" v-if="allowPeek" />

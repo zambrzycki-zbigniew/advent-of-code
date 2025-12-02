@@ -16,6 +16,7 @@ export function solvePart2(...input) {
     let dial = 50;
     let zeros = 0
     for (let { direction, count } of input) {
+        let overflow = false
         let prev = dial
         const rest = count % 100;
         //each 100 crosses 0 exactly once
@@ -23,8 +24,8 @@ export function solvePart2(...input) {
         if (direction === 'R') dial += rest;
         else dial -= rest;
         if (dial > 99) { 
-            //if passing-over put us on 0, don't count it, let final if do that
-            if(dial !== 0) zeros++;
+            overflow = true
+            zeros++;
             dial -= 100;
         }
         if (dial < 0) {
@@ -32,7 +33,8 @@ export function solvePart2(...input) {
             if(prev !== 0) zeros++;
             dial += 100;
         }
-        if(dial === 0) zeros++
+        //if there was an overflow, that means this zero was already counted
+        if(dial === 0 && !overflow) zeros++
     }
     return zeros;
 }
