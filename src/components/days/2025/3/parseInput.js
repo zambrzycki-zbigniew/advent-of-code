@@ -1,3 +1,4 @@
 export function parseInput(input) {    
-    return [input];
+    const rows = input.split('\n')
+    return rows;
 }
