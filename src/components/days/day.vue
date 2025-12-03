@@ -3,8 +3,13 @@
     <v-card class="my-1" density="compact">
       <v-card-subtitle class="mt-1 d-flex align-center">
         <!-- <v-icon icon="mdi-check" color="success" /> -->
-        <span>Part 1</span></v-card-subtitle
-      >
+        <span>Part 1</span>
+      </v-card-subtitle>
+      <v-card-subtitle class="d-flex align-center justify-start">
+        <span class="mt-n1 text-caption" v-if="resultTime[0] !== null">
+          {{ resultTime[0] }} ms
+        </span>
+      </v-card-subtitle>
       <v-card-text class="ma-0 pa-1">
         <v-container class="ma-0 pa-0 ml-3" min-width="150px">
           <v-row>
@@ -20,8 +25,13 @@
     <v-card class="my-1 ml-1" density="compact">
       <v-card-subtitle class="mt-1 d-flex align-center">
         <!-- <v-icon icon="mdi-check" color="success" /> -->
-        <span>Part 2</span></v-card-subtitle
-      >
+        <span>Part 2</span>
+      </v-card-subtitle>
+      <v-card-subtitle class="d-flex align-center justify-start">
+        <span class="mt-n1 text-caption" v-if="resultTime[1] !== null">
+          {{ resultTime[1] }} ms
+        </span>
+      </v-card-subtitle>
       <v-card-text class="ma-0 pa-1">
         <v-container class="ma-0 pa-0 ml-3" min-width="150px">
           <v-row>
@@ -160,8 +170,10 @@ const showcaseDialog = ref(false);
 
 const emit = defineEmits(["onExample"]);
 const exampleResult = ref([null, null]);
+const exampleTime = ref([null, null]);
 
 const result = ref([null, null]);
+const resultTime = ref([null, null]);
 const isCalculating = ref(false);
 let worker;
 const canRun = computed(() => props.inputs && props.inputs.length > 0);
@@ -234,16 +246,28 @@ onMounted(() => {
   });
 
   worker.onmessage = (event) => {
-    const { type, partialResult, peek } = event.data;
+    const { type, partialResult, peek, durationMs } = event.data;
     if (!peek) {
-      if (type === "solvePart1") result.value[0] = partialResult;
-      else if (type === "solvePart2") result.value[1] = partialResult;
-      else if (type === "examplePart1") {
+      if (type === "solvePart1") {
+        result.value[0] = partialResult;
+        resultTime.value[0] = durationMs ?? null;
+      } else if (type === "solvePart2") {
+        result.value[1] = partialResult;
+        resultTime.value[1] = durationMs ?? null;
+      } else if (type === "examplePart1") {
         exampleResult.value[0] = partialResult;
-        emit("onExample", [[exampleResult.value[0]], [exampleResult.value[1]]]);
+        exampleTime.value[0] = durationMs ?? null;
+        emit("onExample", {
+          results: [[exampleResult.value[0]], [exampleResult.value[1]]],
+          times: [...exampleTime.value],
+        });
       } else if (type === "examplePart2") {
         exampleResult.value[1] = partialResult;
-        emit("onExample", [[exampleResult.value[0]], [exampleResult.value[1]]]);
+        exampleTime.value[1] = durationMs ?? null;
+        emit("onExample", {
+          results: [[exampleResult.value[0]], [exampleResult.value[1]]],
+          times: [...exampleTime.value],
+        });
       } else if (type === "error") console.error(event.data.error);
     } else {
       if (type === "solvePart1") peekSolutions.value[0] = partialResult;

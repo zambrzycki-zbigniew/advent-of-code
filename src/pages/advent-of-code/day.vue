@@ -20,8 +20,13 @@
                 color="success"
               />
               <v-icon v-else icon="mdi-close" color="red" />
-              <span>Part 1</span></v-card-subtitle
-            >
+              <span>Part 1</span>
+            </v-card-subtitle>
+            <v-card-subtitle class="d-flex align-center justify-start">
+              <span class="mt-n1 text-caption" v-if="exampleTimes[0] !== null">
+                {{ exampleTimes[0] }} ms
+              </span>
+            </v-card-subtitle>
             <v-card-text class="ma-0 pa-1">
               <v-container class="ma-0 pa-0 ml-3" min-width="150px">
                 <v-row>
@@ -53,8 +58,13 @@
                 color="success"
               />
               <v-icon v-else icon="mdi-close" color="red" />
-              <span>Part 2</span></v-card-subtitle
-            >
+              <span>Part 2</span>
+            </v-card-subtitle>
+            <v-card-subtitle class="d-flex align-center justify-start">
+              <span class="mt-n1 text-caption" v-if="exampleTimes[1] !== null">
+                {{ exampleTimes[1] }} ms
+              </span>
+            </v-card-subtitle>
             <v-card-text class="ma-0 pa-1">
               <v-container class="ma-0 pa-0 ml-3" min-width="150px">
                 <v-row>
@@ -99,8 +109,11 @@
                 color="success"
               />
               <v-icon v-else icon="mdi-close" color="red" />
-              <span>Part 1</span></v-card-subtitle
-            >
+              <span>Part 1</span>
+              <span class="ml-2 text-caption" v-if="exampleTimes[0] !== null">
+                {{ exampleTimes[0] }} ms
+              </span>
+            </v-card-subtitle>
             <v-card-text class="ma-0 pa-1">
               <v-container class="ma-0 pa-0 ml-3" min-width="150px">
                 <v-row>
@@ -143,8 +156,11 @@
                 color="success"
               />
               <v-icon v-else icon="mdi-close" color="red" />
-              <span>Part 2</span></v-card-subtitle
-            >
+              <span>Part 2</span>
+              <span class="ml-2 text-caption" v-if="exampleTimes[1] !== null">
+                {{ exampleTimes[1] }} ms
+              </span>
+            </v-card-subtitle>
             <v-card-text class="ma-0 pa-1">
               <v-container class="ma-0 pa-0 ml-3" min-width="150px">
                 <v-row>
@@ -258,6 +274,7 @@ const exampleResults = ref([
   [null, 0],
   [null, 0],
 ]);
+const exampleTimes = ref([null, null]);
 
 const copySuccess = ref(false);
 
@@ -273,7 +290,10 @@ const copyToClipboard = async () => {
   }
 };
 
-const handleExampleResults = ref((results) => (exampleResults.value = results));
+const handleExampleResults = ref((payload) => {
+  if (payload?.results) exampleResults.value = payload.results;
+  if (payload?.times) exampleTimes.value = payload.times;
+});
 
 const basePath = import.meta.env.BASE_URL || "/";
 
@@ -336,12 +356,17 @@ const loadDayData = async (day) => {
     } else {
       inputs.value = [];
     }
-    if (differentExamples.value && exampleTexts.value[0] && exampleTexts.value[1])
+    if (
+      differentExamples.value &&
+      exampleTexts.value[0] &&
+      exampleTexts.value[1]
+    )
       exampleInputs.value = [
         parseInput.value(exampleTexts.value[0]),
         parseInput.value(exampleTexts.value[1]),
       ];
-    else if (exampleText.value) exampleInputs.value = parseInput.value(exampleText.value);
+    else if (exampleText.value)
+      exampleInputs.value = parseInput.value(exampleText.value);
     transitionPromise.then(() => (dataLoaded.value = true));
   } catch (error) {
     console.error(`Failed to load data for day ${day}:`, error);
@@ -367,6 +392,6 @@ watch(
   opacity: 0;
 }
 .monospaced-textarea textarea {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
 }
 </style>
