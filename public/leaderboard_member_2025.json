@@ -11,29 +11,29 @@
         "get_star_ts": 1764741754
       }
     },
-    "2": {
-      "2": {
-        "get_star_ts": 1764660706,
-        "star_index": 7
-      },
-      "1": {
-        "get_star_ts": 1764659617,
-        "star_index": 6
-      }
-    },
     "1": {
-      "2": {
-        "star_index": 1,
-        "get_star_ts": 1764573120
-      },
       "1": {
         "get_star_ts": 1764570398,
         "star_index": 0
+      },
+      "2": {
+        "star_index": 1,
+        "get_star_ts": 1764573120
+      }
+    },
+    "2": {
+      "1": {
+        "get_star_ts": 1764659617,
+        "star_index": 6
+      },
+      "2": {
+        "get_star_ts": 1764660706,
+        "star_index": 7
       }
     }
   },
-  "id": 3788958,
   "stars": 6,
   "last_star_ts": 1764752546,
+  "id": 3788958,
   "local_score": 71
 }
