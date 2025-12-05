@@ -297,6 +297,15 @@ const handleExampleResults = ref((payload) => {
 
 const basePath = import.meta.env.BASE_URL || "/";
 
+const normalizeParseResult = (value, sourceLabel) => {
+  if (Array.isArray(value)) return value;
+  const type = value === null ? "null" : typeof value;
+  console.warn(
+    `parseInput expected to return an array (${sourceLabel}), got ${type}; ignoring value.`
+  );
+  return [];
+};
+
 const safeFetchText = async (url) => {
   try {
     const res = await fetch(url);
@@ -351,22 +360,29 @@ const loadDayData = async (day) => {
       !exampleTexts.value[0].includes("<!DOCTYPE html>") &&
       !!exampleTexts.value[1] &&
       !exampleTexts.value[1].includes("<!DOCTYPE html>");
-    if (text.value) {
-      inputs.value = parseInput.value(text.value);
-    } else {
-      inputs.value = [];
-    }
+    inputs.value = text.value
+      ? normalizeParseResult(parseInput.value(text.value), "input")
+      : [];
     if (
       differentExamples.value &&
       exampleTexts.value[0] &&
       exampleTexts.value[1]
     )
       exampleInputs.value = [
-        parseInput.value(exampleTexts.value[0]),
-        parseInput.value(exampleTexts.value[1]),
+        normalizeParseResult(
+          parseInput.value(exampleTexts.value[0]),
+          "example 1"
+        ),
+        normalizeParseResult(
+          parseInput.value(exampleTexts.value[1]),
+          "example 2"
+        ),
       ];
     else if (exampleText.value)
-      exampleInputs.value = parseInput.value(exampleText.value);
+      exampleInputs.value = normalizeParseResult(
+        parseInput.value(exampleText.value),
+        "example"
+      );
     transitionPromise.then(() => (dataLoaded.value = true));
   } catch (error) {
     console.error(`Failed to load data for day ${day}:`, error);

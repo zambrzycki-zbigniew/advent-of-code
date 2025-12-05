@@ -1,7 +1,8 @@
 export function solvePart1(...input) {
     let sum = 0
     for (let row of input) {
-        let nums = row.split('').map(Number)
+        let nums = row.trim().split('').map(Number)
+        if(input.length === 4) console.log(nums)
         //just sort, get 2 biggest numbers and see if they're in order
         let sorted = [...nums].sort((a, b) => b - a)
         let i1 = nums.indexOf(sorted.shift())
@@ -25,9 +26,9 @@ export function solvePart2(...input) {
     const maxD = 12
     for (let row of input) {
         //need objects to track order of numbers
-        let nums = row.split('').map(e => ({ v: Number(e) }))
+        let nums = row.trim().split('').map(e => ({ v: Number(e) }))
         //just for display in console
-        const rawnums = row.split('').map(Number)
+        const rawnums = row.trim().split('').map(Number)
         const maxNums = []
         const indices = []
         let maxi = 0
