@@ -5,7 +5,7 @@
         <v-card-title v-if="dayTitle">
           <span>{{ dayTitle }}</span><v-btn :href="aocLink" icon="mdi-page-next-outline" variant="plain" target="_blank" rel="noopener"></v-btn>
         </v-card-title>
-        <v-card-subtitle class="mt-n6 mb-3">Day {{ day }}, {{ year }}</v-card-subtitle>
+        <v-card-subtitle class="mt-n6 mb-4">Day {{ day }}, {{ year }}</v-card-subtitle>
       </v-card>
       <div v-if="!differentExamples && exampleText">
         <v-textarea v-model="exampleText" hide-details label="Example" :rows="exampleText.split('\n').length"
