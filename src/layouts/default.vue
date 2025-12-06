@@ -1,12 +1,18 @@
 <template>
   <v-app>
-    <v-navigation-drawer app :rail="rail" permanent @click="rail = false">
+    <v-navigation-drawer
+      app
+      :rail="rail"
+      permanent
+      @click="rail = false"
+      :width="rail ? undefined : drawerWidth"
+    >
       <v-list-item prepend-icon="mdi-home" :to="`/`">
         <template v-slot:append>
           <v-btn
             icon="mdi-chevron-left"
             variant="text"
-            @click.stop.prevent="rail = !rail"
+            @click.stop.prevent="toggleRail"
           ></v-btn>
         </template>
       </v-list-item>
@@ -58,9 +64,12 @@
           >
             <v-list-item-title
               v-if="!rail"
-              class="d-flex justify-space-between"
+              class="d-flex justify-space-between text-body-2"
             >
-              Day {{ day }}
+              <span style="white-space: nowrap">
+                Day {{ day }}
+                <span v-if="getTitle(year, day)"> - {{ getTitle(year, day) }}</span>
+              </span>
               <span>
                 <v-tooltip location="top">
                   <template v-slot:activator="{ props }">
@@ -208,6 +217,7 @@ const dialogData = ref({
 
 const completionByYear = ref({});
 const examples = ref({});
+const titles = ref({});
 
 const dayNumbers = Array.from({ length: 25 }, (_, i) => i + 1);
 const dayFiles = import.meta.glob("@/components/days/*/*/solve.js");
@@ -299,6 +309,7 @@ async function fetchExamples() {
 
 onMounted(() => {
   fetchExamples();
+  fetchTitles();
 });
 
 async function fetchLastUpdated() {
@@ -415,6 +426,41 @@ function getStarColor(year, day, part) {
   }
   return star;
 }
+
+async function fetchTitles() {
+  try {
+    const res = await fetch(`${basePath}titles.json`);
+    if (res.ok) {
+      titles.value = await res.json();
+    }
+  } catch (error) {
+    console.error("Error fetching titles.json:", error);
+  }
+}
+
+const getTitle = (year, day) => {
+  const y = year?.toString();
+  const d = day?.toString();
+  return titles.value?.[y]?.[d] || null;
+};
+
+const maxLabelLength = computed(() => {
+  let max = 0;
+  years.value.forEach((year) => {
+    for (let day = 1; day <= daysForYear(year); day += 1) {
+      const title = getTitle(year, day);
+      const label = title ? `Day ${day} - ${title}` : `Day ${day}`;
+      max = Math.max(max, label.length);
+    }
+  });
+  return max || 10;
+});
+
+const drawerWidth = computed(() => {
+  // rough width estimate per character plus padding/icons; lean wider to avoid clipping
+  const estimated = maxLabelLength.value * 10 + 120;
+  return Math.max(240, Math.min(480, estimated));
+});
 
 async function openDialog(year, day) {
   dialogYear.value = year;
@@ -653,4 +699,11 @@ function saveYear() {
   openYears.value = [year.toString()];
   yearDialogVisible.value = false;
 }
+
+const toggleRail = () => {
+  rail.value = !rail.value;
+  if (rail.value) {
+    openYears.value = [];
+  }
+};
 </script>
