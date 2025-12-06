@@ -1,6 +1,9 @@
 export function parseInput(input) {
-    const [fallenString, size, blocks] = input.split('\n\n')
-    const blockades = blocks.replaceAll('\r', '').split('\n').map(el => el.split(',')).map(([x, y]) => ({x: parseInt(x), y: parseInt(y)}))
+    let blockades
+    let fallenString, size, blocks
+    [fallenString, size, blocks] = input.split('\r\n\r\n')
+    if(!blocks) [fallenString, size, blocks] = input.split('\n\n')
+    blockades = blocks.replaceAll('\r', '').split('\n').map(el => el.split(',')).map(([x, y]) => ({x: parseInt(x), y: parseInt(y)}))
     const [xSize, ySize] = size.split('x').map(Number)
     const map = {}
     const graph = {}
@@ -27,7 +30,6 @@ export function parseInput(input) {
             }
         }
     }
-    console.log(blockades)
     return [graph, `0:0`, `${xSize-1}:${ySize-1}`, blockades.slice(fallen), helperGraph]
 }
 

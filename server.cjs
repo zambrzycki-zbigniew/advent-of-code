@@ -103,6 +103,63 @@ app.put('/examples', (req, res) => {
 });
 
 /**
+ * PUT /titles
+ * Merge Advent of Code titles into public/titles.json.
+ * Shape: { [year]: { [day]: "Title" } }
+ */
+app.put('/titles', (req, res) => {
+  const titlesPath = path.join(__dirname, 'public', 'titles.json');
+  const incoming = req.body || {};
+
+  fs.readFile(titlesPath, 'utf8', (err, data) => {
+    let stored = {};
+    if (!err && data) {
+      try {
+        stored = JSON.parse(data);
+      } catch (parseErr) {
+        console.error('Error parsing existing titles.json:', parseErr);
+      }
+    }
+
+    Object.entries(incoming).forEach(([year, days]) => {
+      if (!stored[year]) stored[year] = {};
+      Object.entries(days || {}).forEach(([day, title]) => {
+        stored[year][day] = title;
+      });
+    });
+
+    fs.writeFile(titlesPath, JSON.stringify(stored, null, 2), (writeErr) => {
+      if (writeErr) {
+        console.error('Error saving titles.json:', writeErr);
+        return res.status(500).send('Error saving titles.json');
+      }
+      res.send('titles.json updated successfully');
+    });
+  });
+});
+
+/**
+ * GET /aoc-title/:year/:day
+ * Fetches AoC page server-side (avoids browser CORS) and extracts the title.
+ */
+app.get('/aoc-title/:year/:day', async (req, res) => {
+  const { year, day } = req.params;
+  try {
+    const response = await fetch(`https://adventofcode.com/${year}/day/${day}`);
+    if (!response.ok) return res.status(response.status).send('Failed to fetch AoC page');
+    const html = await response.text();
+      const headingMatch = html.match(/<article class="day-desc">[\s\S]*?<h2>(.*?)<\/h2>/i);
+      const heading = headingMatch?.[1] || '';
+      const titleMatch = heading.match(/---\s*Day\s+\d+:\s*(.+?)\s*---/i);
+    const title = titleMatch?.[1]?.trim() || null;
+    res.json({ title });
+  } catch (err) {
+    console.error('Error fetching AoC title:', err);
+    res.status(500).send('Error fetching AoC title');
+  }
+});
+
+/**
  * Ensures parseInput.js and solve.js stubs exist for a given year/day.
  */
 function createDayFiles(year, day) {

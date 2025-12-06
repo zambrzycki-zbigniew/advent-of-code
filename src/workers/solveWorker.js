@@ -1,10 +1,12 @@
 self.onmessage = async function (event) {
-    const { type, year, day, inputs, part, example, differentExamples, peek } = event.data;
+    const { type, year, day, inputs, part, example, differentExamples, peek, rawInput } = event.data;
 
     try {
         const targetYear = year ?? 2024;
         const solverModule = await import(`../components/days/${targetYear}/${day}/solve.js`);
+        const parseModule = await import(`../components/days/${targetYear}/${day}/parseInput.js`);
         const { solvePart1, solvePart2 } = solverModule;
+        const { parseInput } = parseModule;
 
         const withDuration = (fn, args) => {
             const start = performance.now();
@@ -13,12 +15,22 @@ self.onmessage = async function (event) {
             return { result, duration };
         };
 
+        const resolveInputs = () => {
+            if (rawInput !== undefined && rawInput !== null) {
+                const { result, duration } = withDuration(parseInput, [rawInput]);
+                return { parsed: result, parseDuration: duration };
+            }
+            return { parsed: inputs, parseDuration: 0 };
+        };
+
         if (type === "solvePart1") {
-            const { result, duration } = withDuration(solvePart1, inputs);
-            self.postMessage({ type, partialResult: result, peek, durationMs: duration });
+            const { parsed, parseDuration } = resolveInputs();
+            const { result, duration } = withDuration(solvePart1, parsed);
+            self.postMessage({ type, partialResult: result, peek, durationMs: duration + parseDuration, parseDurationMs: parseDuration });
         } else if (type === "solvePart2") {
-            const { result, duration } = withDuration(solvePart2, inputs);
-            self.postMessage({ type, partialResult: result, peek, durationMs: duration });
+            const { parsed, parseDuration } = resolveInputs();
+            const { result, duration } = withDuration(solvePart2, parsed);
+            self.postMessage({ type, partialResult: result, peek, durationMs: duration + parseDuration, parseDurationMs: parseDuration });
         } else if (type === "examplePart1") {
             const example1 = differentExamples ? example[0] : example;
             if (example) {

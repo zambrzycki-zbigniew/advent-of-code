@@ -7,7 +7,7 @@
       </v-card-subtitle>
       <v-card-subtitle class="d-flex align-center justify-start">
         <span class="mt-n1 text-caption" v-if="resultTime[0] !== null">
-          {{ resultTime[0] }} ms
+          {{ Math.round(resultTime[0] * 1000) / 1000 }} ms
         </span>
       </v-card-subtitle>
       <v-card-text class="ma-0 pa-1">
@@ -29,7 +29,7 @@
       </v-card-subtitle>
       <v-card-subtitle class="d-flex align-center justify-start">
         <span class="mt-n1 text-caption" v-if="resultTime[1] !== null">
-          {{ resultTime[1] }} ms
+          {{ Math.round(resultTime[1] * 1000) / 1000 }} ms
         </span>
       </v-card-subtitle>
       <v-card-text class="ma-0 pa-1">
@@ -44,20 +44,8 @@
         </v-container>
       </v-card-text>
     </v-card>
-    <v-btn
-      class="my-1 ml-1"
-      height="auto"
-      @click="showcaseDialog = true"
-      v-if="!allowPeek"
-      >Show solution</v-btn
-    >
-    <v-btn
-      class="my-1 ml-1"
-      height="auto"
-      v-if="isDev && !allowPeek"
-      @click="devBypass"
-      >Preview</v-btn
-    >
+    <v-btn class="my-1 ml-1" height="auto" @click="showcaseDialog = true" v-if="!allowPeek">Show solution</v-btn>
+    <v-btn class="my-1 ml-1" height="auto" v-if="isDev && !allowPeek" @click="devBypass">Preview</v-btn>
   </div>
   <Showcase :year="year" :day="day" v-if="allowPeek" />
   <v-dialog v-model="showcaseDialog" max-width="800px">
@@ -76,29 +64,16 @@
 
             <!-- Right column for inputs -->
             <v-col cols="7">
-              <v-textarea
-                v-model="peekInputText"
-                label="Your Input"
-                rows="20"
-                outlined
-              ></v-textarea>
+              <v-textarea v-model="peekInputText" label="Your Input" rows="20" outlined></v-textarea>
 
               <v-row class="mt-4">
                 <v-col>
-                  <v-text-field
-                    v-model="peekPart1Solution"
-                    label="Your Part 1 Solution"
-                    type="number"
-                    outlined
-                  ></v-text-field>
+                  <v-text-field v-model="peekPart1Solution" label="Your Part 1 Solution" type="number"
+                    outlined></v-text-field>
                 </v-col>
                 <v-col>
-                  <v-text-field
-                    v-model="peekPart2Solution"
-                    label="Your Part 2 Solution"
-                    type="number"
-                    outlined
-                  ></v-text-field>
+                  <v-text-field v-model="peekPart2Solution" label="Your Part 2 Solution" type="number"
+                    outlined></v-text-field>
                 </v-col>
               </v-row>
             </v-col>
@@ -111,21 +86,16 @@
         <v-btn variant="text" @click="closeDialog">{{
           allowPeek ? "Exit" : "Cancel"
         }}</v-btn>
-        <v-btn
-          variant="text"
-          :loading="peekLoading"
-          :disabled="peekLoading || allowPeek"
-          v-if="!allowPeek"
-          @click="checkSolutions"
-        >
+        <v-btn variant="text" :loading="peekLoading" :disabled="peekLoading || allowPeek" v-if="!allowPeek"
+          @click="checkSolutions">
           Check
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
-  
-  <script setup>
+
+<script setup>
 import { ref, onMounted, watch, onUnmounted, computed } from "vue";
 import Showcase from "../showcase.vue";
 const isDev = process.env.NODE_ENV !== "production";
@@ -334,6 +304,7 @@ onMounted(() => {
             year: props.year,
             day: props.day,
             inputs: JSON.parse(JSON.stringify(newInputs)),
+            rawInput: props.rawInput,
           });
         }
         if (newPart === 2 || newPart === null) {
@@ -342,6 +313,7 @@ onMounted(() => {
             year: props.year,
             day: props.day,
             inputs: JSON.parse(JSON.stringify(newInputs)),
+            rawInput: props.rawInput,
           });
         }
       }
