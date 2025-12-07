@@ -8,6 +8,7 @@ const app = express();
 const PORT = 3001;
 const DEFAULT_YEAR = 2024;
 const sseClients = [];
+const INPUT_CREATED_PATH = path.join(__dirname, 'public', 'input-created.json');
 
 /** Enable CORS so the Vite frontend can call the helper endpoints locally. */
 app.use(cors());
@@ -57,6 +58,61 @@ app.delete('/inputs/{*path}', (req, res) => {
     res.status(500).send('Error deleting file');
   }
 });
+
+function loadInputCreated() {
+  try {
+    const raw = fs.readFileSync(INPUT_CREATED_PATH, 'utf8');
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistInputCreated(data) {
+  fs.writeFileSync(INPUT_CREATED_PATH, JSON.stringify(data, null, 2));
+}
+
+function recordInputCreated(fullPath, createdMs) {
+  const normalized = fullPath.replace(/\\/g, '/');
+  const match = normalized.match(/public\/inputs\/(\d{4})\/(\d+)\.txt$/);
+  if (!match) return;
+  const [, year, day] = match;
+  const store = loadInputCreated();
+  if (!store[year]) store[year] = {};
+  if (store[year][day] !== undefined) return;
+  const timestamp =
+    typeof createdMs === 'number' && Number.isFinite(createdMs)
+      ? Math.round(createdMs)
+      : Date.now();
+  store[year][day] = timestamp;
+  persistInputCreated(store);
+}
+
+function seedInputCreated() {
+  const inputsRoot = path.join(__dirname, 'public', 'inputs');
+  if (!fs.existsSync(inputsRoot)) return;
+  const store = loadInputCreated();
+  const years = fs.readdirSync(inputsRoot);
+  years.forEach((year) => {
+    const yearDir = path.join(inputsRoot, year);
+    if (!fs.statSync(yearDir).isDirectory()) return;
+    const files = fs.readdirSync(yearDir);
+    files.forEach((filename) => {
+      const match = filename.match(/^(\d+)\.txt$/);
+      if (!match) return;
+      const day = match[1];
+      if (store?.[year]?.[day] !== undefined) return;
+      const full = path.join(yearDir, filename);
+      try {
+        const stats = fs.statSync(full);
+        const createdMs = stats.birthtimeMs || stats.ctimeMs || Date.now();
+        recordInputCreated(full, createdMs);
+      } catch (err) {
+        console.error('Failed to stat input file', full, err);
+      }
+    });
+  });
+}
 
 /**
  * PUT /examples
@@ -320,6 +376,16 @@ if (process.env.NODE_ENV !== 'production') {
   try {
     fs.watch(inputsRoot, { recursive: true }, (eventType, filename) => {
       if (!filename) return;
+      const fullPath = path.join(inputsRoot, filename);
+      if (fs.existsSync(fullPath)) {
+        try {
+          const stats = fs.statSync(fullPath);
+          const createdMs = stats.birthtimeMs || stats.ctimeMs || Date.now();
+          recordInputCreated(fullPath, createdMs);
+        } catch (err) {
+          console.error('Failed to record input creation time:', err);
+        }
+      }
       sseClients.forEach((client) => client.write('data: reload\n\n'));
     });
   } catch (err) {

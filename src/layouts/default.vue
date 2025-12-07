@@ -75,24 +75,34 @@
                   <template v-slot:activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      :color="getStarColor(year, day, 1).color"
+                      :color="getStarInfo(year, day, 1).color"
                       icon="mdi-star"
                     />
                   </template>
                   <template v-slot:default>
-                    {{ getStarColor(year, day, 1).time }}
+                    <div
+                      v-for="(line, idx) in getStarInfo(year, day, 1).lines"
+                      :key="idx"
+                    >
+                      {{ line }}
+                    </div>
                   </template>
                 </v-tooltip>
                 <v-tooltip location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      :color="getStarColor(year, day, 2).color"
+                      :color="getStarInfo(year, day, 2).color"
                       icon="mdi-star"
                     />
                   </template>
                   <template v-slot:default>
-                    {{ getStarColor(year, day, 2).time }}
+                    <div
+                      v-for="(line, idx) in getStarInfo(year, day, 2).lines"
+                      :key="idx"
+                    >
+                      {{ line }}
+                    </div>
                   </template>
                 </v-tooltip>
               </span>
@@ -197,6 +207,7 @@ const defaultYear = 2024;
 const openYears = ref([]);
 const yearsConfig = ref({});
 const lastUpdated = ref({});
+const inputCreated = ref({});
 
 const drawer = ref(true);
 const rail = ref(false);
@@ -327,6 +338,21 @@ async function fetchLastUpdated() {
 
 fetchLastUpdated();
 
+async function fetchInputCreated() {
+  try {
+    const res = await fetch(`${basePath}input-created.json`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      inputCreated.value = await res.json();
+    }
+  } catch (error) {
+    console.error("Error fetching input-created.json:", error);
+  }
+}
+
+fetchInputCreated();
+
 onMounted(() => {
   if (!isDev) return;
   try {
@@ -415,16 +441,66 @@ function formatTimestamp(unixTimestamp) {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-function getStarColor(year, day, part) {
-  let star = { color: "gray", time: "not yet" };
-  const completion = completionByYear.value[year];
-  if (completion && completion[day] && completion[day][part]) {
-    star = {
-      color: "amber",
-      time: formatTimestamp(completion[day][part].get_star_ts),
-    };
+function formatMillis(ms) {
+  const date = new Date(ms);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function formatDurationMs(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hoursNum = Math.floor(totalSeconds / 3600);
+  const minutesNum = Math.floor((totalSeconds % 3600) / 60);
+  const secondsNum = totalSeconds % 60;
+  const parts = [];
+  if (hoursNum > 0) parts.push(`${String(hoursNum).padStart(2, "0")}h`);
+  if (minutesNum > 0) parts.push(`${String(minutesNum).padStart(2, "0")}m`);
+  if (hoursNum === 0 && minutesNum === 0) {
+    parts.push(`${String(secondsNum).padStart(2, "0")}s`);
   }
-  return star;
+  return parts.join(" ");
+}
+
+function getStarInfo(year, day, part) {
+  const completion = completionByYear.value[year];
+  const createdAtRaw =
+    inputCreated.value?.[year]?.[day] !== undefined
+      ? inputCreated.value[year][day]
+      : null;
+  const part1Ts = completion?.[day]?.[1]?.get_star_ts || null;
+  const part2Ts = completion?.[day]?.[2]?.get_star_ts || null;
+  const part1Ms = part1Ts ? part1Ts * 1000 : null;
+  const part2Ms = part2Ts ? part2Ts * 1000 : null;
+  const createdAt =
+    createdAtRaw && part1Ms && createdAtRaw > part1Ms ? null : createdAtRaw;
+  const lines = [];
+  let color = "gray";
+
+  if (part === 1) {
+    if (createdAt) lines.push(`Input: ${formatMillis(createdAt)}`);
+    if (part1Ts) {
+      color = "amber";
+      lines.push(`Done: ${formatTimestamp(part1Ts)}`);
+      if (createdAt) {
+        lines.push(`Duration: ${formatDurationMs(part1Ms - createdAt)}`);
+      }
+    }
+  } else if (part === 2) {
+    if (part2Ts) {
+      color = "amber";
+      lines.push(`Done: ${formatTimestamp(part2Ts)}`);
+      if (part1Ts) {
+        lines.push(`Duration: ${formatDurationMs(part2Ms - part1Ms)}`);
+      }
+    }
+  }
+
+  if (lines.length === 0) lines.push("not yet");
+  return { color, lines };
 }
 
 async function fetchTitles() {
