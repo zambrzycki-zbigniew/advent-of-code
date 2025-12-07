@@ -158,6 +158,23 @@ const peekPromise = ref(new Promise((r) => r));
 const peekBanter = ref(
   "There's a toll on this road—you need to provide your input and solutions before you can check how I got mine!"
 );
+const deepClone = (val) => {
+  if (val === null || typeof val !== "object") return val;
+  if (val instanceof Date) return new Date(val.getTime());
+  if (val instanceof Set) return new Set(Array.from(val, deepClone));
+  if (Array.isArray(val)) return val.map(deepClone);
+  return Object.fromEntries(Object.entries(val).map(([k, v]) => [k, deepClone(v)]));
+};
+const cloneForWorker = (value) => {
+  if (typeof structuredClone === "function") {
+    try {
+      return structuredClone(value);
+    } catch (err) {
+      /* ignore and fallback */
+    }
+  }
+  return deepClone(value);
+};
 
 const closeDialog = () => {
   showcaseDialog.value = false;
@@ -189,14 +206,14 @@ const checkSolutions = async () => {
         type: "solvePart1",
         year: props.year,
         day: props.day,
-        inputs: JSON.parse(JSON.stringify(peekInput)),
+        inputs: cloneForWorker(peekInput),
         peek: true,
       });
       worker.postMessage({
         type: "solvePart2",
         year: props.year,
         day: props.day,
-        inputs: JSON.parse(JSON.stringify(peekInput)),
+        inputs: cloneForWorker(peekInput),
         peek: true,
       });
     } else {
@@ -284,7 +301,7 @@ onMounted(() => {
               type: "examplePart1",
               year: props.year,
               day: props.day,
-              example: JSON.parse(JSON.stringify(newExample)),
+              example: cloneForWorker(newExample),
               differentExamples: newDifferentExamples,
             });
           }
@@ -293,7 +310,7 @@ onMounted(() => {
               type: "examplePart2",
               year: props.year,
               day: props.day,
-              example: JSON.parse(JSON.stringify(newExample)),
+              example: cloneForWorker(newExample),
               differentExamples: newDifferentExamples,
             });
           }
@@ -303,7 +320,7 @@ onMounted(() => {
             type: "solvePart1",
             year: props.year,
             day: props.day,
-            inputs: JSON.parse(JSON.stringify(newInputs)),
+            inputs: cloneForWorker(newInputs),
             rawInput: props.rawInput,
           });
         }
@@ -312,7 +329,7 @@ onMounted(() => {
             type: "solvePart2",
             year: props.year,
             day: props.day,
-            inputs: JSON.parse(JSON.stringify(newInputs)),
+            inputs: cloneForWorker(newInputs),
             rawInput: props.rawInput,
           });
         }
