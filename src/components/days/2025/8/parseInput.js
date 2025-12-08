@@ -1,3 +1,5 @@
-export function parseInput(input) {    
-    return [input];
+export function parseInput(input) {
+    const coords = input.split('\n')
+    // console.log(coords)
+    return coords;
 }
