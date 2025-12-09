@@ -1,3 +1,25 @@
+// In a worker there is no DOM; guard against Vite HMR CSS updates that expect `document`.
+if (typeof document === "undefined") {
+    globalThis.document = {
+        head: {
+            appendChild() {},
+            querySelector() { return null; },
+            querySelectorAll() { return []; },
+        },
+        createElement() {
+            return {
+                setAttribute() {},
+                innerHTML: "",
+                remove() {},
+                style: {},
+                insertAdjacentElement() {},
+            };
+        },
+        querySelector() { return null; },
+        querySelectorAll() { return []; },
+    };
+}
+
 self.onmessage = async function (event) {
     const { type, year, day, inputs, part, example, differentExamples, peek, rawInput } = event.data;
 
