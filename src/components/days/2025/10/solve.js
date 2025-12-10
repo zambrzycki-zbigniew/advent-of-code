@@ -87,7 +87,7 @@ export function solveMachine(joltage, buttons) {
     const { A, b } = buildSystem(joltage, buttons)
     const independent = pickIndependentRows(A, b)
     const Ared = independent.rows.map(i => A[i])
-    //🍞
+    //    🍞
     const bred = independent.rows.map(i => b[i])
     const maxPress = maxPressByButton(joltage, buttons)
     const pivotCols = computePivotColumns(Ared)
@@ -95,6 +95,7 @@ export function solveMachine(joltage, buttons) {
     for (let c = 0; c < buttons.length; c++) {
         if (!pivotCols.includes(c)) freeCols.push(c)
     }
+    //                                        🍞
     const best = solveByFreeEnumeration(Ared, bred, pivotCols, freeCols, maxPress)
     return best
 }
