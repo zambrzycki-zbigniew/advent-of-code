@@ -30,33 +30,35 @@ self.onmessage = async function (event) {
         const { solvePart1, solvePart2 } = solverModule;
         const { parseInput } = parseModule;
 
-        const withDuration = (fn, args) => {
+        const withDuration = async (fn, args = []) => {
+            const normalizedArgs = Array.isArray(args) ? args : [args];
             const start = performance.now();
-            const result = fn(...args);
+            let result = fn(...normalizedArgs);
+            if(result instanceof Promise) result = await result
             const duration = Number((performance.now() - start).toFixed(4));
             return { result, duration };
         };
 
-        const resolveInputs = () => {
+        const resolveInputs = async () => {
             if (rawInput !== undefined && rawInput !== null) {
-                const { result, duration } = withDuration(parseInput, [rawInput]);
+                const { result, duration } = await withDuration(parseInput, [rawInput]);
                 return { parsed: result, parseDuration: duration };
             }
             return { parsed: inputs, parseDuration: 0 };
         };
 
         if (type === "solvePart1") {
-            const { parsed, parseDuration } = resolveInputs();
-            const { result, duration } = withDuration(solvePart1, parsed);
+            const { parsed, parseDuration } = await resolveInputs();
+            const { result, duration } = await withDuration(solvePart1, parsed);
             self.postMessage({ type, partialResult: result, peek, durationMs: duration + parseDuration, parseDurationMs: parseDuration });
         } else if (type === "solvePart2") {
-            const { parsed, parseDuration } = resolveInputs();
-            const { result, duration } = withDuration(solvePart2, parsed);
+            const { parsed, parseDuration } = await resolveInputs();
+            const { result, duration } = await withDuration(solvePart2, parsed);
             self.postMessage({ type, partialResult: result, peek, durationMs: duration + parseDuration, parseDurationMs: parseDuration });
         } else if (type === "examplePart1") {
             const example1 = differentExamples ? example[0] : example;
             if (example) {
-                const { result, duration } = withDuration(solvePart1, example1);
+                const { result, duration } = await withDuration(solvePart1, example1);
                 self.postMessage({ type, partialResult: result, durationMs: duration });
             } else {
                 self.postMessage({ type, partialResult: null, durationMs: null });
@@ -64,7 +66,7 @@ self.onmessage = async function (event) {
         } else if (type === "examplePart2") {
             const example2 = differentExamples ? example[1] : example;
             if (example) {
-                const { result, duration } = withDuration(solvePart2, example2);
+                const { result, duration } = await withDuration(solvePart2, example2);
                 self.postMessage({ type, partialResult: result, durationMs: duration });
             } else {
                 self.postMessage({ type, partialResult: null, durationMs: null });
