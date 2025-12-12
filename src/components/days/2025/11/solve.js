@@ -47,7 +47,10 @@ export function solvePart2(...input) {
 //     return count
 // }
 
+//only sensible usage of recursion in existence (probably)
 function countPathsLeadingFromTo(from, to, graph, end = 'out') {
+    //we keep the results of all node traversals here
+    //if we get to a node that we already got the answer from then we can stop
     const memo = new Map()
     function dfs(node) {
         if (node === end) return 0
@@ -55,12 +58,15 @@ function countPathsLeadingFromTo(from, to, graph, end = 'out') {
         const neighbors = graph[node] || []
         let count = 0
         for (const next of neighbors) {
+            //if we're there we're there
             if (next === to) {
                 count++
             } else {
+                //if not then maybe we'll eventually get there, keep looking
                 count += dfs(next)
             }
         }
+        //all found results save to global memoization map so they can be reused in case we get to the same node again
         memo.set(node, count)
         return count
     }
