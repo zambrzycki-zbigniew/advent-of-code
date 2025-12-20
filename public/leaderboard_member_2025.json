@@ -1,88 +1,24 @@
 {
-  "name": "zambrzycki-zbigniew",
-  "local_score": 254,
-  "stars": 24,
   "id": 3788958,
-  "last_star_ts": 1765548246,
   "completion_day_level": {
     "10": {
       "2": {
-        "star_index": 68,
-        "get_star_ts": 1765384219
+        "get_star_ts": 1765384219,
+        "star_index": 68
       },
       "1": {
-        "get_star_ts": 1765364837,
-        "star_index": 67
-      }
-    },
-    "12": {
-      "1": {
-        "get_star_ts": 1765547432,
-        "star_index": 76
-      },
-      "2": {
-        "get_star_ts": 1765548246,
-        "star_index": 77
+        "star_index": 67,
+        "get_star_ts": 1765364837
       }
     },
     "8": {
-      "2": {
-        "star_index": 59,
-        "get_star_ts": 1765185176
-      },
       "1": {
         "get_star_ts": 1765184579,
         "star_index": 58
-      }
-    },
-    "4": {
-      "2": {
-        "get_star_ts": 1764834283,
-        "star_index": 29
-      },
-      "1": {
-        "get_star_ts": 1764833668,
-        "star_index": 28
-      }
-    },
-    "5": {
-      "1": {
-        "star_index": 37,
-        "get_star_ts": 1764918987
       },
       "2": {
-        "star_index": 38,
-        "get_star_ts": 1764919193
-      }
-    },
-    "3": {
-      "1": {
-        "get_star_ts": 1764741754,
-        "star_index": 14
-      },
-      "2": {
-        "get_star_ts": 1764752546,
-        "star_index": 17
-      }
-    },
-    "9": {
-      "2": {
-        "get_star_ts": 1765305409,
-        "star_index": 64
-      },
-      "1": {
-        "get_star_ts": 1765278778,
-        "star_index": 63
-      }
-    },
-    "7": {
-      "2": {
-        "star_index": 52,
-        "get_star_ts": 1765104515
-      },
-      "1": {
-        "get_star_ts": 1765099022,
-        "star_index": 49
+        "star_index": 59,
+        "get_star_ts": 1765185176
       }
     },
     "1": {
@@ -95,35 +31,99 @@
         "star_index": 1
       }
     },
-    "2": {
+    "4": {
       "2": {
-        "get_star_ts": 1764660706,
-        "star_index": 7
+        "star_index": 29,
+        "get_star_ts": 1764834283
       },
       "1": {
-        "get_star_ts": 1764659617,
-        "star_index": 6
+        "star_index": 28,
+        "get_star_ts": 1764833668
       }
     },
     "11": {
-      "1": {
-        "get_star_ts": 1765431042,
-        "star_index": 69
-      },
       "2": {
         "star_index": 70,
         "get_star_ts": 1765435410
+      },
+      "1": {
+        "star_index": 69,
+        "get_star_ts": 1765431042
+      }
+    },
+    "2": {
+      "1": {
+        "get_star_ts": 1764659617,
+        "star_index": 6
+      },
+      "2": {
+        "get_star_ts": 1764660706,
+        "star_index": 7
+      }
+    },
+    "7": {
+      "1": {
+        "star_index": 49,
+        "get_star_ts": 1765099022
+      },
+      "2": {
+        "star_index": 52,
+        "get_star_ts": 1765104515
+      }
+    },
+    "5": {
+      "1": {
+        "star_index": 37,
+        "get_star_ts": 1764918987
+      },
+      "2": {
+        "star_index": 38,
+        "get_star_ts": 1764919193
+      }
+    },
+    "12": {
+      "2": {
+        "get_star_ts": 1765548246,
+        "star_index": 77
+      },
+      "1": {
+        "star_index": 76,
+        "get_star_ts": 1765547432
+      }
+    },
+    "9": {
+      "2": {
+        "star_index": 64,
+        "get_star_ts": 1765305409
+      },
+      "1": {
+        "star_index": 63,
+        "get_star_ts": 1765278778
+      }
+    },
+    "3": {
+      "2": {
+        "get_star_ts": 1764752546,
+        "star_index": 17
+      },
+      "1": {
+        "star_index": 14,
+        "get_star_ts": 1764741754
       }
     },
     "6": {
-      "1": {
-        "star_index": 42,
-        "get_star_ts": 1765006315
-      },
       "2": {
         "star_index": 43,
         "get_star_ts": 1765010384
+      },
+      "1": {
+        "star_index": 42,
+        "get_star_ts": 1765006315
       }
     }
-  }
+  },
+  "stars": 24,
+  "local_score": 254,
+  "last_star_ts": 1765548246,
+  "name": "zambrzycki-zbigniew"
 }
