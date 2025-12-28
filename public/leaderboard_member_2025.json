@@ -1,16 +1,37 @@
 {
-  "last_star_ts": 1765548246,
   "id": 3788958,
+  "last_star_ts": 1765548246,
   "stars": 24,
+  "name": "zambrzycki-zbigniew",
   "completion_day_level": {
-    "5": {
+    "4": {
       "1": {
-        "get_star_ts": 1764918987,
-        "star_index": 37
+        "get_star_ts": 1764833668,
+        "star_index": 28
       },
       "2": {
-        "star_index": 38,
-        "get_star_ts": 1764919193
+        "get_star_ts": 1764834283,
+        "star_index": 29
+      }
+    },
+    "10": {
+      "2": {
+        "get_star_ts": 1765384219,
+        "star_index": 68
+      },
+      "1": {
+        "star_index": 67,
+        "get_star_ts": 1765364837
+      }
+    },
+    "11": {
+      "1": {
+        "star_index": 69,
+        "get_star_ts": 1765431042
+      },
+      "2": {
+        "get_star_ts": 1765435410,
+        "star_index": 70
       }
     },
     "12": {
@@ -23,74 +44,64 @@
         "get_star_ts": 1765547432
       }
     },
-    "10": {
-      "2": {
-        "get_star_ts": 1765384219,
-        "star_index": 68
-      },
-      "1": {
-        "get_star_ts": 1765364837,
-        "star_index": 67
-      }
-    },
-    "4": {
-      "1": {
-        "get_star_ts": 1764833668,
-        "star_index": 28
-      },
-      "2": {
-        "get_star_ts": 1764834283,
-        "star_index": 29
-      }
-    },
-    "1": {
-      "2": {
-        "star_index": 1,
-        "get_star_ts": 1764573120
-      },
-      "1": {
-        "star_index": 0,
-        "get_star_ts": 1764570398
-      }
-    },
-    "3": {
-      "2": {
-        "star_index": 17,
-        "get_star_ts": 1764752546
-      },
-      "1": {
-        "get_star_ts": 1764741754,
-        "star_index": 14
-      }
-    },
-    "11": {
-      "2": {
-        "get_star_ts": 1765435410,
-        "star_index": 70
-      },
-      "1": {
-        "get_star_ts": 1765431042,
-        "star_index": 69
-      }
-    },
-    "8": {
-      "1": {
-        "star_index": 58,
-        "get_star_ts": 1765184579
-      },
-      "2": {
-        "star_index": 59,
-        "get_star_ts": 1765185176
-      }
-    },
     "6": {
       "1": {
-        "get_star_ts": 1765006315,
-        "star_index": 42
+        "star_index": 42,
+        "get_star_ts": 1765006315
       },
       "2": {
         "star_index": 43,
         "get_star_ts": 1765010384
+      }
+    },
+    "5": {
+      "2": {
+        "star_index": 38,
+        "get_star_ts": 1764919193
+      },
+      "1": {
+        "get_star_ts": 1764918987,
+        "star_index": 37
+      }
+    },
+    "2": {
+      "1": {
+        "get_star_ts": 1764659617,
+        "star_index": 6
+      },
+      "2": {
+        "star_index": 7,
+        "get_star_ts": 1764660706
+      }
+    },
+    "8": {
+      "2": {
+        "star_index": 59,
+        "get_star_ts": 1765185176
+      },
+      "1": {
+        "get_star_ts": 1765184579,
+        "star_index": 58
+      }
+    },
+    "1": {
+      "1": {
+        "get_star_ts": 1764570398,
+        "star_index": 0
+      },
+      "2": {
+        "get_star_ts": 1764573120,
+        "star_index": 1
+      }
+    },
+    "9": {
+      "2": {
+        "get_star_ts": 1765305409,
+        "star_index": 64
+      },
+      "1": {
+        "star_index": 63,
+        "get_star_ts": 1765278778
       }
     },
     "7": {
@@ -99,31 +110,20 @@
         "get_star_ts": 1765099022
       },
       "2": {
-        "star_index": 52,
-        "get_star_ts": 1765104515
+        "get_star_ts": 1765104515,
+        "star_index": 52
       }
     },
-    "9": {
+    "3": {
       "1": {
-        "star_index": 63,
-        "get_star_ts": 1765278778
+        "get_star_ts": 1764741754,
+        "star_index": 14
       },
       "2": {
-        "get_star_ts": 1765305409,
-        "star_index": 64
-      }
-    },
-    "2": {
-      "1": {
-        "star_index": 6,
-        "get_star_ts": 1764659617
-      },
-      "2": {
-        "star_index": 7,
-        "get_star_ts": 1764660706
+        "get_star_ts": 1764752546,
+        "star_index": 17
       }
     }
   },
-  "name": "zambrzycki-zbigniew",
   "local_score": 254
 }
