@@ -1,37 +1,28 @@
 {
-  "local_score": 254,
-  "last_star_ts": 1765548246,
+  "stars": 24,
   "name": "zambrzycki-zbigniew",
+  "last_star_ts": 1765548246,
   "id": 3788958,
+  "local_score": 254,
   "completion_day_level": {
-    "5": {
-      "1": {
-        "star_index": 37,
-        "get_star_ts": 1764918987
-      },
+    "10": {
       "2": {
-        "get_star_ts": 1764919193,
-        "star_index": 38
+        "get_star_ts": 1765384219,
+        "star_index": 68
+      },
+      "1": {
+        "get_star_ts": 1765364837,
+        "star_index": 67
       }
     },
-    "9": {
+    "3": {
       "2": {
-        "get_star_ts": 1765305409,
-        "star_index": 64
+        "get_star_ts": 1764752546,
+        "star_index": 17
       },
       "1": {
-        "get_star_ts": 1765278778,
-        "star_index": 63
-      }
-    },
-    "12": {
-      "1": {
-        "get_star_ts": 1765547432,
-        "star_index": 76
-      },
-      "2": {
-        "star_index": 77,
-        "get_star_ts": 1765548246
+        "star_index": 14,
+        "get_star_ts": 1764741754
       }
     },
     "2": {
@@ -40,18 +31,78 @@
         "star_index": 7
       },
       "1": {
-        "star_index": 6,
-        "get_star_ts": 1764659617
+        "get_star_ts": 1764659617,
+        "star_index": 6
+      }
+    },
+    "7": {
+      "2": {
+        "star_index": 52,
+        "get_star_ts": 1765104515
+      },
+      "1": {
+        "star_index": 49,
+        "get_star_ts": 1765099022
+      }
+    },
+    "4": {
+      "1": {
+        "get_star_ts": 1764833668,
+        "star_index": 28
+      },
+      "2": {
+        "star_index": 29,
+        "get_star_ts": 1764834283
+      }
+    },
+    "5": {
+      "2": {
+        "star_index": 38,
+        "get_star_ts": 1764919193
+      },
+      "1": {
+        "star_index": 37,
+        "get_star_ts": 1764918987
+      }
+    },
+    "6": {
+      "2": {
+        "get_star_ts": 1765010384,
+        "star_index": 43
+      },
+      "1": {
+        "get_star_ts": 1765006315,
+        "star_index": 42
+      }
+    },
+    "9": {
+      "1": {
+        "get_star_ts": 1765278778,
+        "star_index": 63
+      },
+      "2": {
+        "get_star_ts": 1765305409,
+        "star_index": 64
       }
     },
     "8": {
       "1": {
-        "star_index": 58,
-        "get_star_ts": 1765184579
+        "get_star_ts": 1765184579,
+        "star_index": 58
       },
       "2": {
-        "get_star_ts": 1765185176,
-        "star_index": 59
+        "star_index": 59,
+        "get_star_ts": 1765185176
+      }
+    },
+    "11": {
+      "1": {
+        "get_star_ts": 1765431042,
+        "star_index": 69
+      },
+      "2": {
+        "get_star_ts": 1765435410,
+        "star_index": 70
       }
     },
     "1": {
@@ -64,66 +115,15 @@
         "star_index": 0
       }
     },
-    "6": {
+    "12": {
       "2": {
-        "star_index": 43,
-        "get_star_ts": 1765010384
+        "star_index": 77,
+        "get_star_ts": 1765548246
       },
       "1": {
-        "get_star_ts": 1765006315,
-        "star_index": 42
-      }
-    },
-    "10": {
-      "1": {
-        "get_star_ts": 1765364837,
-        "star_index": 67
-      },
-      "2": {
-        "star_index": 68,
-        "get_star_ts": 1765384219
-      }
-    },
-    "3": {
-      "2": {
-        "get_star_ts": 1764752546,
-        "star_index": 17
-      },
-      "1": {
-        "get_star_ts": 1764741754,
-        "star_index": 14
-      }
-    },
-    "11": {
-      "2": {
-        "get_star_ts": 1765435410,
-        "star_index": 70
-      },
-      "1": {
-        "star_index": 69,
-        "get_star_ts": 1765431042
-      }
-    },
-    "4": {
-      "1": {
-        "star_index": 28,
-        "get_star_ts": 1764833668
-      },
-      "2": {
-        "star_index": 29,
-        "get_star_ts": 1764834283
-      }
-    },
-    "7": {
-      "1": {
-        "star_index": 49,
-        "get_star_ts": 1765099022
-      },
-      "2": {
-        "star_index": 52,
-        "get_star_ts": 1765104515
+        "star_index": 76,
+        "get_star_ts": 1765547432
       }
     }
-  },
-  "stars": 24
+  }
 }
